@@ -1,9 +1,8 @@
 {
   "name": "erf.db",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "1.0.0-beta3",
+  "version": "1.0.0-beta4",
   "author": "erffy",
-  "type": "module",
   "private": false,
   "repository": {
     "type": "git",
