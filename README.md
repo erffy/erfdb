@@ -1,3 +1,5 @@
+### to be released in the future in npmjs
+
 ## erf.db
 - A Map-based Smartest and Fastest database module
 
