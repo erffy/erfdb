@@ -20,8 +20,7 @@
   },
   "dependencies": {
     "@sapphire/shapeshift": "4.0",
-    "graceful-fs": "4.2",
-    "lodash": "4.17"
+    "graceful-fs": "4.2"
   },
   "peerDependencies": {
     "bson": "6.8",
@@ -38,7 +37,6 @@
   },
   "devDependencies": {
     "@types/graceful-fs": "latest",
-    "@types/lodash": "latest",
     "@types/node": "latest",
     "bson": "6.8",
     "yaml": "2.4"

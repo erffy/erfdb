@@ -55,6 +55,6 @@ db.slice(5, 5);
 db.some((e) => e === 24);
 db.sweep((e) => e);
 
-db.set('ts.g', 'test');
-console.log(db.filter((e) => e === 'test').array())
+db.set('ts.g.c', 'test');
+console.log(db.keyOf('test'))
 */

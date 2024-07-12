@@ -2,7 +2,7 @@ import Validator from '../utils/Validator';
 import MemoryDriver from './MemoryDriver';
 
 import { readFileSync, writeFileSync } from 'graceful-fs';
-import lodash from 'lodash';
+import { get } from '../utils/Lodash';
 
 /**
  * JsonDriver is a class that extends MemoryDriver to add support for reading and writing
@@ -31,7 +31,7 @@ export default class JsonDriver<V = any> extends MemoryDriver<V> {
   protected read(): void {
     const data = JSON.parse(readFileSync(this.options.path, { encoding: 'utf-8' }));
 
-    for (const key in data) this.cache.set(key, lodash.get(data, key));
+    for (const key in data) this.cache.set(key, get(data, key));
   }
 
   /**

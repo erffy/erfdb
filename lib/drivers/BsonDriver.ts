@@ -1,7 +1,7 @@
 import MemoryDriver from './MemoryDriver';
 
 import { readFileSync, writeFileSync } from 'graceful-fs';
-import lodash from 'lodash';
+import { get } from '../utils/Lodash';
 
 let BSON: typeof import('bson');
 try {
@@ -23,7 +23,7 @@ export default class BsonDriver<V = any> extends MemoryDriver<V> {
   protected read(): void {
     const data = BSON.deserialize(Buffer.from(readFileSync(this.options.path, { encoding: 'binary' })));
 
-    for (const key in data) this.cache.set(key, lodash.get(data, key));
+    for (const key in data) this.cache.set(key, get(data, key));
   }
 
   /**

@@ -1,5 +1,7 @@
-import lodash from 'lodash';
+import { set } from '../utils/Lodash';
 import Validator from '../utils/Validator';
+
+import { existsSync } from 'graceful-fs';
 
 /**
  * MemoryDriver is a class that manages an in-memory cache with support for various operations
@@ -17,7 +19,7 @@ export default class MemoryDriver<V = any> {
   public constructor(options: MemoryDriverOptions = {}) {
     this.options = MemoryDriver.checkOptions({ ...options, type: 'memory' });
 
-    if (this.constructor.name != 'MemoryDriver') {
+    if (this.constructor.name != 'MemoryDriver' && existsSync(this.options.path)) {
       try {
         this.read();
       } catch {
@@ -103,9 +105,9 @@ export default class MemoryDriver<V = any> {
    * @returns {Record<string, V>} The JSON representation of the cache.
    */
   public json(): Record<string, V> {
-    const obj = {};
+    const obj: Record<string, V> = {};
 
-    for (const [key, value] of this) lodash.set(obj, key, value);
+    for (const [key, value] of this) set(obj, key, value);
 
     return obj;
   }

@@ -1,7 +1,7 @@
 import MemoryDriver from './MemoryDriver';
 
 import { readFileSync, writeFileSync } from 'graceful-fs';
-import lodash from 'lodash';
+import { get } from '../utils/Lodash';
 
 let YAML: typeof import('yaml');
 try {
@@ -27,7 +27,7 @@ export default class YamlDriver<V = any> extends MemoryDriver<V> {
   protected read(): void {
     const data = YAML.parse(readFileSync(this.options.path, { encoding: 'utf-8' }));
 
-    for (const key in data) this.cache.set(key, lodash.get(data, key));
+    for (const key in data) this.cache.set(key, get(data, key));
   }
 
   /**

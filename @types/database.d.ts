@@ -1,7 +1,7 @@
-type Drivers<V> = import('../drivers/MemoryDriver').default<V> | 
-               import('../drivers/JsonDriver').default<V> |
-               import('../drivers/BsonDriver').default<V> | 
-               import('../drivers/YamlDriver').default<V>;
+type Drivers<V> = import('../lib/drivers/MemoryDriver').default<V> | 
+                  import('../lib/drivers/JsonDriver').default<V> |
+                  import('../lib/drivers/BsonDriver').default<V> | 
+                  import('../lib/drivers/YamlDriver').default<V>;
 
 type MathOperators = '+' | '-' | '*' | '**' | '%' | '/';
 
