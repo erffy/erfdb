@@ -2,7 +2,6 @@
   "name": "erf.db",
   "description": "A Map-based Smartest and Fastest database module",
   "author": "erffy",
-  "module": "lib/index.ts",
   "type": "module",
   "private": false,
   "repository": {
@@ -14,6 +13,7 @@
     "build": "tsc",
     "clear": "rm -rf src"
   },
+  "main": "src/index.js",
   "exports": {
     "default": "./src/index.js",
     "types": "./global.d.ts"
