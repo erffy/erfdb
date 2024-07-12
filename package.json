@@ -1,7 +1,7 @@
 {
   "name": "erf.db",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "1.0.0-beta2",
+  "version": "1.0.0-beta3",
   "author": "erffy",
   "type": "module",
   "private": false,
@@ -10,7 +10,6 @@
     "url": "git+https://github.com/erffy/erfdb.git"
   },
   "scripts": {
-    "preinstall": "npm install --global typescript@5.5",
     "postinstall": "tsc",
     "start": "node src/index",
     "clear": "rm -rf src"
