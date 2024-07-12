@@ -35,6 +35,8 @@ const { Database, JsonDriver, BsonDriver, YamlDriver } = require('erf.db');
 //
 
 const db = new Database();
+// with driver specified
+const db = new Database({ driver: new JsonDriver() });
 /*
 const db2 = new Database();
 
