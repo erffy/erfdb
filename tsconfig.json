@@ -1,0 +1,30 @@
+{
+  "tsc-alias": {
+    "verbose": false,
+    "resolveFullPaths": true
+  },
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "ES7"],
+    "module": "CommonJS",
+    "moduleDetection": "force",
+    "moduleResolution": "Node",
+    "rootDir": "./lib",    
+    "outDir": "./src",
+    "baseUrl": "./",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noImplicitOverride": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "pretty": true,
+    "resolveJsonModule": true
+  },
+  "exclude": [
+    "node_modules",
+    "src",
+    "tests"
+  ]
+}

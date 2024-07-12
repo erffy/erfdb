@@ -1,0 +1,36 @@
+import MemoryDriver from './MemoryDriver';
+
+import { readFileSync, writeFileSync } from 'graceful-fs';
+import lodash from 'lodash';
+
+let BSON: typeof import('bson');
+try {
+  BSON = require('bson');
+} catch {
+  throw new ReferenceError('\'bson\' module is not installed.');
+}
+
+export default class BsonDriver<V = any> extends MemoryDriver<V> {
+  public constructor(options: MemoryDriverOptions = {}) {
+    super({ ...options, type: 'bson' });
+  }
+
+  /**
+   * Reads data from the BSON file and populates the cache.
+   * Uses lodash to traverse and set nested properties.
+   * @protected
+   */
+  protected read(): void {
+    const data = BSON.deserialize(Buffer.from(readFileSync(this.options.path, { encoding: 'binary' })));
+
+    for (const key in data) this.cache.set(key, lodash.get(data, key));
+  }
+
+  /**
+   * Writes current cache contents to the BSON file.
+   * @protected
+   */
+  protected write(): void {
+    writeFileSync(this.options.path, Buffer.from(BSON.serialize(this.json())), { encoding: 'binary' });
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "erf.db",
+  "description": "A Map-based Smartest and Fastest database module",
+  "author": "erffy",
+  "module": "lib/index.ts",
+  "type": "module",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erffy/erfdb.git"
+  },
+  "scripts": {
+    "start": "node src/index",
+    "build": "tsc",
+    "clear": "rm -rf src"
+  },
+  "exports": {
+    "default": "./src/index.js",
+    "types": "./global.d.ts"
+  },
+  "dependencies": {
+    "@sapphire/shapeshift": "4.0",
+    "graceful-fs": "4.2",
+    "lodash": "4.17"
+  },
+  "peerDependencies": {
+    "bson": "6.8",
+    "typescript": "5.5",
+    "yaml": "2.4"
+  },
+  "peerDependenciesMeta": {
+    "yaml": {
+      "optional": true
+    },
+    "bson": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/graceful-fs": "latest",
+    "@types/lodash": "latest",
+    "@types/node": "latest",
+    "bson": "6.8",
+    "yaml": "2.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

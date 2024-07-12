@@ -1,0 +1,52 @@
+name: Node Package
+
+on:
+  release:
+    types: [created]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+        
+      - name: Node
+        uses: actions/setup-node@master
+        with:
+          node-version: 22
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+        
+      - name: Node
+        uses: actions/setup-node@master
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Prepare
+        run: npm install --global pnpm typescript
+
+      - name: Install
+        run: pnpm install
+        
+      - name: Build
+        run: pnpm run build
+        
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Remove Build
+        run: pnpm run clear
