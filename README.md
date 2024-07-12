@@ -1,5 +1,6 @@
 ### to be released in the future in npmjs
-
+[![Node Package](https://github.com/erffy/erfdb/actions/workflows/npm.yml/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/npm.yml)
+[![CodeQL](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql)
 ## erf.db
 - A Map-based Smartest and Fastest database module
 
