@@ -35,7 +35,6 @@ export function set(object: Record<string, any>, path: string, value?: any): Rec
     } else current = current[key];
   }
 
-  // Set value at the final key
   const finalKey = keys[keys.length - 1];
   if (finalKey.includes('[')) {
     const arrayKey = finalKey.substring(0, finalKey.indexOf('['));

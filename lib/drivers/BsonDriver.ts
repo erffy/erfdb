@@ -6,13 +6,13 @@ import { get } from '../utils/Lodash';
 let BSON: typeof import('bson');
 try {
   BSON = require('bson');
-} catch {
-  throw new ReferenceError('\'bson\' module is not installed.');
-}
+} catch { }
 
 export default class BsonDriver<V = any> extends MemoryDriver<V> {
   public constructor(options: MemoryDriverOptions = {}) {
     super({ ...options, type: 'bson' });
+
+    if (!BSON) throw new ReferenceError('\'bson\' module is not installed.');
   }
 
   /**

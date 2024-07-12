@@ -6,9 +6,7 @@ import { get } from '../utils/Lodash';
 let YAML: typeof import('yaml');
 try {
   YAML = require('yaml');
-} catch {
-  throw new ReferenceError('\'yaml\' module is not installed.');
-}
+} catch { }
 
 export default class YamlDriver<V = any> extends MemoryDriver<V> {
   /**
@@ -17,6 +15,8 @@ export default class YamlDriver<V = any> extends MemoryDriver<V> {
    */
   public constructor(options: MemoryDriverOptions = {}) {
     super({ ...options, type: 'yaml' });
+
+    if (!YAML) throw new ReferenceError('\'yaml\' module is not installed.');
   }
 
   /**
