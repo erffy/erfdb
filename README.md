@@ -6,7 +6,7 @@
 
 ### Features
 - 🍃 Performance: Written in TypeScript for optimal speed and performance.
-- 🛠️ Ease of Use: Provides a straightforward API for managing the database.
+- 🛠️ Ease of Use: Provides a basic functionality for managing the database.
 - 🔒 Security: Implements best practices to secure data storage and access.
 - 🖥️ Versatile Driver Support: Supports up to 4 drivers, providing flexibility for different storage and retrieval needs.
 - ♻️ Modern: Fully compatible with both ESM (ECMAScript Modules) and CJS (CommonJS), ensuring seamless integration with modern JavaScript environments.
