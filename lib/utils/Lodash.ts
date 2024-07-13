@@ -86,15 +86,13 @@ export function merge(target: Record<string, any>, ...sources: Array<Record<stri
   if (!source) return target;
 
   for (const key in source) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) {
-      if (source[key] instanceof Object && !Array.isArray(source[key])) {
-        if (!target[key] || typeof target[key] !== 'object') target[key] = {};
-        merge(target[key], source[key]);
-      } else if (Array.isArray(source[key])) {
-        if (!target[key] || !Array.isArray(target[key])) target[key] = [];
-        target[key] = target[key].concat(source[key]);
-      } else target[key] = source[key];
-    }
+    if (typeof source[key] === 'object') {
+      if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+      merge(target[key], source[key]);
+    } else if (Array.isArray(source[key])) {
+      if (!target[key] || !Array.isArray(target[key])) target[key] = [];
+      target[key] = target[key].concat(source[key]);
+    } else target[key] = source[key];
   }
 
   return merge(target, ...sources);

@@ -1,7 +1,7 @@
 import { set } from '../utils/Lodash';
 import Validator from '../utils/Validator';
 
-import { existsSync } from 'graceful-fs';
+import { existsSync, unlinkSync } from 'graceful-fs';
 
 /**
  * MemoryDriver is a class that manages an in-memory cache with support for various operations
@@ -17,7 +17,7 @@ export default class MemoryDriver<V = any> {
    * @param {MemoryDriverOptions} [options={}] The options for the memory driver.
    */
   public constructor(options: MemoryDriverOptions = {}) {
-    this.options = MemoryDriver.checkOptions({ ...options, type: 'memory' });
+    this.options = this.constructor.checkOptions({ ...options, type: 'memory' });
 
     if (this.constructor.name != 'MemoryDriver' && existsSync(this.options.path)) {
       try {
@@ -94,6 +94,22 @@ export default class MemoryDriver<V = any> {
   }
 
   /**
+   * Deletes the database file associated with the driver if it exists.
+   * This method only applies to subclasses of MemoryDriver and not to the MemoryDriver itself.
+   * 
+   * @returns {boolean} True if the database file was successfully deleted, false otherwise.
+   */
+  public destroy(): boolean {
+    if (this.constructor.name === 'MemoryDriver') return false;
+
+    const path = this.options.path;
+    if (!existsSync(path)) return false;
+
+    unlinkSync(path);
+    return !existsSync(path);
+  }
+
+  /**
    * Clears all entries in the cache.
    */
   public clear(): void {
@@ -160,7 +176,7 @@ export default class MemoryDriver<V = any> {
    */
   static checkOptions(o?: MemoryDriverOptions): _MemoryDriverOptions {
     o ??= {};
-    
+
     Validator.object(o);
 
     o.type ??= 'memory';

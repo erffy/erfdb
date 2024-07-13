@@ -1,5 +1,3 @@
-### to be released in the future in npmjs
-[![Node Package](https://github.com/erffy/erfdb/actions/workflows/npm.yml/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/npm.yml)
 [![CodeQL](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql)
 ## erf.db
 - A Map-based Smartest and Fastest database module
@@ -13,10 +11,10 @@
 
 ### Installation
 ```sh
-npm install erf.db
-pnpm add erf.db
-yarn add erf.db
-bun add erf.db
+npm install erffy/erfdb
+pnpm add erffy/erfdb
+yarn add erffy/erfdb
+bun add erffy/erfdb
 ```
 
 ### Usage
@@ -29,7 +27,7 @@ import { Database/*, JsonDriver, BsonDriver, YamlDriver */} from 'erf.db';
 //
 
 // CJS
-const Database = require('erf.db');
+const Database = require('erf.db').default;
 // or
 const { Database, JsonDriver, BsonDriver, YamlDriver } = require('erf.db');
 //

@@ -12,7 +12,7 @@ export default class Database<V = any> {
    * @param options - The options to configure the database.
    */
   public constructor(options?: DatabaseOptions<V>) {
-    this.options = Database.checkOptions<V>(options);
+    this.options = this.constructor.checkOptions(options);
   }
 
   /**
@@ -122,6 +122,15 @@ export default class Database<V = any> {
    */
   public del(key: string): boolean {
     return this.options.driver.del(key);
+  }
+
+  /**
+   * Deletes the database file associated with the driver if it exists.
+   *
+   * @returns True if the database file was successfully deleted, false otherwise.
+   */
+  public destroy(): boolean {
+    return this.options.driver.destroy();
   }
 
   /**
@@ -280,6 +289,47 @@ export default class Database<V = any> {
     if (!negative && data < 0) data = 0;
 
     this.set(key, data as V);
+
+    return data;
+  }
+
+  /**
+   * Pushes a value to an array at the specified key.
+   * @param key - The key of the entry.
+   * @param value - The value to push.
+   * @returns The updated array after the push operation.
+   */
+  public push<T>(key: string, value: T): T[] {
+    const data = this.get(key);
+
+    if (!Array.isArray(data)) {
+      const newValue = [value];
+      this.set(key, newValue as V);
+
+      return newValue;
+    }
+
+    data.push(value);
+    this.set(key, data as V);
+
+    return data;
+  }
+
+  /**
+   * Pulls a value from an array at the specified key.
+   * @param key - The key of the entry.
+   * @param value - The value to pull.
+   * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
+   */
+  public pull<T>(key: string, value: T): T[] | undefined {
+    const data = this.get(key);
+    if (!Array.isArray(data)) return undefined;
+
+    const index = data.indexOf(value);
+    if (index !== -1) {
+      data.splice(index, 1);
+      this.set(key, data as V);
+    }
 
     return data;
   }
@@ -480,3 +530,5 @@ export default class Database<V = any> {
     return options as _DatabaseOptions;
   }
 }
+
+new Database()

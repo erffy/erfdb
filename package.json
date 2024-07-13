@@ -1,15 +1,13 @@
 {
-  "name": "erf.db",
+  "name": "@erffy/erf.db",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "1.0.0-beta4",
+  "version": "13.07.2024",
   "author": "erffy",
-  "private": false,
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/erffy/erfdb.git"
+    "url": "git://github.com/erffy/erfdb.git"
   },
   "scripts": {
-    "postinstall": "tsc",
+    "postinstall": "npm i && tsc && echo 'You can safely ignore the error messages above.'",
     "start": "node src/index",
     "clear": "rm -rf src"
   },
@@ -40,9 +38,5 @@
     "@types/node": "latest",
     "bson": "6.8",
     "yaml": "2.4"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
   }
 }
