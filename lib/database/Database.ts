@@ -94,7 +94,7 @@ export default class Database<V = any> {
   public clone(contents: boolean = true): Database<V> {
     Validator.InstanceValidation(Boolean).parse(contents);
 
-    const clone: Database<V> = new (this.constructor as any)[Symbol.species]({ driver: new MemoryDriver(this.options) });
+    const clone: Database<V> = new this.constructor[Symbol.species]({ driver: new MemoryDriver(this.options) });
 
     if (contents) this.each((value, index, key) => clone.set(key, value));
 
@@ -370,8 +370,8 @@ export default class Database<V = any> {
   public partition(callback: (value: V, index: number, key: string, Database: this) => boolean): [Database<V>, Database<V>] {
     Validator.function(callback);
 
-    const db1: Database<V> = this.clone();
-    const db2: Database<V> = this.clone();
+    const db1: Database<V> = this.clone(false);
+    const db2: Database<V> = this.clone(false);
 
     this.each((value, index, key, Database) => {
       if (callback(value, index, key, Database)) db1.set(key, value);
@@ -396,22 +396,6 @@ export default class Database<V = any> {
     }
 
     return db;
-  }
-
-  /**
-   * Retrieves an array of values for a specific key name in the entries.
-   * @param keyName - The key name to pluck values for.
-   * @returns An array of values for the specified key name.
-   */
-  public pluck<T>(keyName: string): T[] {
-    Validator.string(keyName);
-
-    const values: T[] = [];
-    this.each((value: any) => {
-      if (typeof value === 'object' && value.hasOwnProperty(keyName)) values.push(value[keyName]);
-    });
-
-    return values;
   }
 
   /**
