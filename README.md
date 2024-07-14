@@ -1,5 +1,5 @@
 [![CodeQL](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql)
-## erf.db
+## erfdb
 - A Map-based Smartest and Fastest database module
 
 ### Features
@@ -21,15 +21,15 @@ bun add erffy/erfdb
 - Note: MemoryDriver is default.
 ```js
 // TypeScript / ESM
-import Database/*, { JsonDriver, BsonDriver, YamlDriver }*/ from 'erf.db';
+import Database/*, { JsonDriver, BsonDriver, YamlDriver }*/ from 'erfdb';
 // or
-import { Database/*, JsonDriver, BsonDriver, YamlDriver */} from 'erf.db';
+import { Database/*, JsonDriver, BsonDriver, YamlDriver */} from 'erfdb';
 //
 
 // CJS
-const Database = require('erf.db').default;
+const Database = require('erfdb').default;
 // or
-const { Database, JsonDriver, BsonDriver, YamlDriver } = require('erf.db');
+const { Database, JsonDriver, BsonDriver, YamlDriver } = require('erfdb');
 //
 
 const db = new Database();

@@ -1,6 +1,6 @@
 /// <reference path="./@types">
 
-declare module 'erf.db' {
+declare module 'erfdb' {
   /**
    * A class representing a key-value database.
    * @template V The type of values stored in the database.

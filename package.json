@@ -1,5 +1,5 @@
 {
-  "name": "@erffy/erf.db",
+  "name": "erfdb",
   "description": "A Map-based Smartest and Fastest database module",
   "version": "2024.07.15-rc1",
   "author": "erffy",
