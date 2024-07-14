@@ -88,12 +88,15 @@ export default class Database<V = any> {
 
   /**
    * Creates a clone of the database.
-   * @returns A new database instance with the same entries.
+   * @param contents Whether to clone the contents (default: true).
+   * @returns {Database<V>} A new database instance with the same entries.
    */
-  public clone(): Database<V> {
-    const clone = new Database<V>({ driver: new MemoryDriver(this.options) });
+  public clone(contents: boolean = true): Database<V> {
+    Validator.InstanceValidation(Boolean).parse(contents);
 
-    this.each((value, index, key) => clone.set(key, value));
+    const clone: Database<V> = new (this.constructor as any)[Symbol.species]({ driver: new MemoryDriver(this.options) });
+
+    if (contents) this.each((value, index, key) => clone.set(key, value));
 
     return clone;
   }
@@ -176,7 +179,7 @@ export default class Database<V = any> {
   public filter(callback: (value: V, index: number, key: string, Database: this) => boolean): Database<V> {
     Validator.function(callback);
 
-    const db: Database<V> = new Database({ driver: new MemoryDriver(this.options) });
+    const db: Database<V> = this.clone(false);
 
     this.each((value, index, key, Database) => {
       if (callback(value, index, key, Database)) db.set(key, value);
@@ -229,7 +232,7 @@ export default class Database<V = any> {
   public intersection(other: Database<V>): Database<V> {
     Validator.instance(Database, other);
 
-    const db: Database<V> = new Database({ driver: new MemoryDriver() });
+    const db: Database<V> = this.clone(false);
     this.each((value, index, key) => {
       if (other.has(key)) db.set(key, value);
     });
@@ -302,12 +305,7 @@ export default class Database<V = any> {
   public push<T>(key: string, value: T): T[] {
     const data = this.get(key);
 
-    if (!Array.isArray(data)) {
-      const newValue = [value];
-      this.set(key, newValue as V);
-
-      return newValue;
-    }
+    if (!Array.isArray(data)) return this.set(key, [value] as V) as T[];
 
     data.push(value);
     this.set(key, data as V);
@@ -342,7 +340,7 @@ export default class Database<V = any> {
   public map(callback: (value: V, index: number, key: string, Database: this) => boolean): Database<V> {
     Validator.function(callback);
 
-    const db: Database<V> = new Database({ driver: new MemoryDriver(this.options) });
+    const db: Database<V> = this.clone();
 
     this.each((...args) => {
       if (callback(...args)) db.set(args[2], args[0]);
@@ -372,8 +370,8 @@ export default class Database<V = any> {
   public partition(callback: (value: V, index: number, key: string, Database: this) => boolean): [Database<V>, Database<V>] {
     Validator.function(callback);
 
-    const db1: Database<V> = new Database({ driver: new MemoryDriver(this.options) });
-    const db2: Database<V> = new Database({ driver: new MemoryDriver(this.options) });
+    const db1: Database<V> = this.clone();
+    const db2: Database<V> = this.clone();
 
     this.each((value, index, key, Database) => {
       if (callback(value, index, key, Database)) db1.set(key, value);
@@ -390,7 +388,8 @@ export default class Database<V = any> {
    */
   public pick(...keys: string[]): Database<V> {
     Validator.instance(Array, keys);
-    const db = new Database<V>({ driver: new MemoryDriver() });
+
+    const db: Database<V> = this.clone();
 
     for (const key of keys) {
       if (this.has(key)) db.set(key, this.get(key)!);
@@ -425,9 +424,7 @@ export default class Database<V = any> {
     Validator.function(callback);
 
     let accumulator = initialValue;
-    this.each((value, index, key, Database) => {
-      accumulator = callback(accumulator, value, index, key, Database);
-    });
+    this.each((value, index, key, Database) => accumulator = callback(accumulator, value, index, key, Database));
 
     return accumulator;
   }
@@ -452,7 +449,7 @@ export default class Database<V = any> {
     Validator.NumberValidation.greaterThanOrEqual(0).parse(start);
     Validator.NumberValidation.greaterThanOrEqual(start).lessThanOrEqual(this.size).parse(end);
 
-    const db: Database<V> = new Database({ driver: new MemoryDriver() });
+    const db: Database<V> = this.clone(false);
 
     for (const { key, value } of this.all().slice(start, end)) db.set(key, value);
 
@@ -530,5 +527,3 @@ export default class Database<V = any> {
     return options as _DatabaseOptions;
   }
 }
-
-new Database()

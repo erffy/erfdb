@@ -46,9 +46,10 @@ declare module 'erf.db' {
 
     /**
      * Creates a clone of the database.
-     * @returns A new instance of the Database with the same entries.
+     * @param contents Whether to clone the contents (default: true).
+     * @returns {Database<V>} A new database instance with the same entries.
      */
-    public clone(): Database<V>;
+    public clone(contents?: boolean): Database<V>;
 
     /**
      * Concatenates multiple databases into one.
@@ -63,6 +64,13 @@ declare module 'erf.db' {
      * @returns True if the entry was deleted, false otherwise.
      */
     public del(key: string): boolean;
+
+    /**
+     * Deletes the database file associated with the driver if it exists.
+     *
+     * @returns True if the database file was successfully deleted, false otherwise.
+     */
+    public destroy(): boolean;
 
     /**
      * Iterates over each entry in the database.
@@ -139,6 +147,22 @@ declare module 'erf.db' {
      * @throws {RangeError} If attempting to perform an invalid mathematical operation.
      */
     public math(key: string, operator: MathOperators, count: number = 1, negative: boolean = false): number;
+
+    /**
+     * Pushes a value to an array at the specified key.
+     * @param key - The key of the entry.
+     * @param value - The value to push.
+     * @returns The updated array after the push operation.
+     */
+    public push<T>(key: string, value: T): T[];
+
+    /**
+     * Pulls a value from an array at the specified key.
+     * @param key - The key of the entry.
+     * @param value - The value to pull.
+     * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
+     */
+    public pull<T>(key: string, value: T): T[] | undefined;
 
     /**
      * Maps entries to a new database based on a callback function.

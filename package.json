@@ -1,7 +1,7 @@
 {
   "name": "@erffy/erf.db",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "13.07.2024",
+  "version": "14.07.2024",
   "author": "erffy",
   "repository": {
     "url": "git://github.com/erffy/erfdb.git"
