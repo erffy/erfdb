@@ -7,7 +7,7 @@
     "url": "git://github.com/erffy/erfdb.git"
   },
   "scripts": {
-    "postinstall": "npm i && tsc && echo 'You can safely ignore the error messages above.'",
+    "postinstall": "tsc && echo 'You can safely ignore the error messages above.'",
     "start": "node src/index",
     "clear": "rm -rf src"
   },
