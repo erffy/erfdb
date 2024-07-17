@@ -31,6 +31,6 @@ export default class BsonDriver<V = any> extends MemoryDriver<V> {
    * @protected
    */
   protected write(): void {
-    writeFileSync(this.options.path, Buffer.from(BSON.serialize(this.json())), { encoding: 'binary' });
+    writeFileSync(this.options.path, Buffer.from(BSON.serialize(this.toJSON())), { encoding: 'binary' });
   }
 }

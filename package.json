@@ -1,14 +1,13 @@
 {
   "name": "erfdb",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "2024.07.16",
+  "version": "2024.7.17",
   "author": "erffy",
   "repository": {
     "url": "git://github.com/erffy/erfdb.git"
   },
   "scripts": {
-    "postinstall": "tsc && echo 'You can safely ignore the error messages above.'",
-    "start": "node src/index",
+    "postinstall": "tsc",
     "clear": "rm -rf src"
   },
   "main": "src/index.js",
@@ -17,8 +16,9 @@
     "types": "./global.d.ts"
   },
   "dependencies": {
-    "@sapphire/shapeshift": "4.0",
-    "graceful-fs": "4.2"
+    "@sapphire/shapeshift": "~4.0.0",
+    "erfevents": "github:erffy/erfevents",
+    "graceful-fs": "~4.2.11"
   },
   "peerDependencies": {
     "bson": "6.8",
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@types/graceful-fs": "latest",
     "@types/node": "latest",
-    "bson": "6.8",
-    "yaml": "2.4"
+    "bson": "~6.8.0",
+    "yaml": "~2.4.5"
   }
 }

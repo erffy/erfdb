@@ -12,7 +12,7 @@ export default class Validator {
   /**
    * Validation schema for integers.
    */
-  static NumberValidation = s.number().int();
+  static NumberValidation = s.number();
 
   /**
    * Validation schema for nullish values (null or undefined).
@@ -64,7 +64,7 @@ export default class Validator {
    * @returns {any} The validated number.
    */
   static number(value: any): any {
-    return this.NumberValidation.parse(value);
+    return this.NumberValidation.int().parse(value);
   }
 
   /**

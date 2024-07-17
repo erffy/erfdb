@@ -39,7 +39,7 @@ export default class JsonDriver<V = any> extends MemoryDriver<V> {
    * @protected
    */
   protected write(): void {
-    const buffer = Buffer.from(JSON.stringify(this.json(), null, this.options.spaces));
+    const buffer = Buffer.from(JSON.stringify(this.toJSON(), null, this.options.spaces));
 
     writeFileSync(this.options.path, buffer, { encoding: 'utf-8' });
   }

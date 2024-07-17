@@ -12,6 +12,7 @@ export default class Database<V = any> {
    * @param options - The options to configure the database.
    */
   public constructor(options?: DatabaseOptions<V>) {
+    // @ts-ignore
     this.options = this.constructor.checkOptions(options);
   }
 
@@ -34,32 +35,14 @@ export default class Database<V = any> {
   /**
    * Retrieves all entries in the database.
    * @param amount - The maximum number of entries to retrieve. Defaults to 0 (retrieve all).
-   * @returns An array of key-value pairs.
+   * @returns A Set of key-value pairs.
    */
-  public all(amount: number = 0): { key: string, value: V }[] {
+  public all(amount: number = 0): Set<{ key: string, value: V }> {
     Validator.number(amount);
 
-    const results: { key: string, value: V }[] = Array.from(this).map(([key, value]) => ({ key, value }));
+    const results: { key: string, value: V }[] = this.options.driver.toArray();
 
-    return amount > 0 ? results.slice(0, amount) : results;
-  }
-
-  /**
-   * Retrieves all keys and values as separate arrays.
-   * @returns An object containing the keys and values arrays.
-   */
-  public array(): { keys: string[], values: V[] } {
-    const keys: string[] = [];
-    const values: V[] = [];
-
-    const data = this.options.driver.array();
-
-    for (const { key, value } of data) {
-      keys.push(key);
-      values.push(value);
-    }
-
-    return { keys, values };
+    return new Set(amount > 0 ? results.slice(0, amount) : results);
   }
 
   /**
@@ -70,7 +53,7 @@ export default class Database<V = any> {
   public at(pattern: string): string | V | undefined {
     Validator.StringValidation.regex(/^(k|key|v|value):\d+$/).parse(pattern);
 
-    const array = this.array();
+    const array = this.toArray();
     const keys = array.keys;
     const values = array.values;
 
@@ -93,7 +76,7 @@ export default class Database<V = any> {
    */
   public clone(contents: boolean = true): Database<V> {
     Validator.InstanceValidation(Boolean).parse(contents);
-
+    // @ts-ignore
     const clone: Database<V> = new this.constructor[Symbol.species]({ driver: new MemoryDriver(this.options) });
 
     if (contents) this.each((value, index, key) => clone.set(key, value));
@@ -144,11 +127,10 @@ export default class Database<V = any> {
   public each(callback: (value: V, index: number, key: string, Database: this) => void): this {
     Validator.function(callback);
 
-    const data = this.all();
-    for (let index = 0; index < data.length; index++) {
-      const { key, value } = data[index];
-
+    let index: number = 0;
+    for (const { key, value } of this.all()) {
       callback(value, index, key, this);
+      index++;
     }
 
     return this;
@@ -162,9 +144,7 @@ export default class Database<V = any> {
   public every(callback: (value: V, key: string, Database: this) => boolean): boolean {
     Validator.function(callback);
 
-    const data = this.all();
-
-    for (const { key, value } of data) {
+    for (const { key, value } of this.all()) {
       if (!callback(value, key, this)) return false;
     }
 
@@ -196,11 +176,10 @@ export default class Database<V = any> {
   public find(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V } | undefined {
     Validator.function(callback);
 
-    const data = this.all();
-    for (let index = 0; index < data.length; index++) {
-      const { key, value } = data[index];
-
+    let index: number = 0;
+    for (const { key, value } of this.all()) {
       if (callback(value, index, key, this)) return { key, value };
+      index++;
     }
 
     return undefined;
@@ -238,14 +217,6 @@ export default class Database<V = any> {
     });
 
     return db;
-  }
-
-  /**
-   * Retrieves all entries in the database as a JSON object.
-   * @returns A JSON object containing all entries.
-   */
-  public json(): Record<string, V> {
-    return this.options.driver.json();
   }
 
   /**
@@ -297,42 +268,6 @@ export default class Database<V = any> {
   }
 
   /**
-   * Pushes a value to an array at the specified key.
-   * @param key - The key of the entry.
-   * @param value - The value to push.
-   * @returns The updated array after the push operation.
-   */
-  public push<T>(key: string, value: T): T[] {
-    const data = this.get(key);
-
-    if (!Array.isArray(data)) return this.set(key, [value] as V) as T[];
-
-    data.push(value);
-    this.set(key, data as V);
-
-    return data;
-  }
-
-  /**
-   * Pulls a value from an array at the specified key.
-   * @param key - The key of the entry.
-   * @param value - The value to pull.
-   * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
-   */
-  public pull<T>(key: string, value: T): T[] | undefined {
-    const data = this.get(key);
-    if (!Array.isArray(data)) return undefined;
-
-    const index = data.indexOf(value);
-    if (index !== -1) {
-      data.splice(index, 1);
-      this.set(key, data as V);
-    }
-
-    return data;
-  }
-
-  /**
    * Creates a new database with entries that satisfy the provided callback.
    * @param callback - The function to test for each entry.
    * @returns A new database instance with the mapped entries.
@@ -379,6 +314,42 @@ export default class Database<V = any> {
     });
 
     return [db1, db2];
+  }
+
+  /**
+   * Pushes a value to an array at the specified key.
+   * @param key - The key of the entry.
+   * @param value - The value to push.
+   * @returns The updated array after the push operation.
+   */
+  public push<T>(key: string, value: T): T[] {
+    const data = this.get(key);
+
+    if (!Array.isArray(data)) return this.set(key, [value] as V) as T[];
+
+    data.push(value);
+    this.set(key, data as V);
+
+    return data;
+  }
+
+  /**
+   * Pulls a value from an array at the specified key.
+   * @param key - The key of the entry.
+   * @param value - The value to pull.
+   * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
+   */
+  public pull<T>(key: string, value: T): T[] | undefined {
+    const data = this.get(key);
+    if (!Array.isArray(data)) return undefined;
+
+    const index = data.indexOf(value);
+    if (index !== -1) {
+      data.splice(index, 1);
+      this.set(key, data as V);
+    }
+
+    return data;
   }
 
   /**
@@ -435,7 +406,7 @@ export default class Database<V = any> {
 
     const db: Database<V> = this.clone(false);
 
-    for (const { key, value } of this.all().slice(start, end)) db.set(key, value);
+    for (const { key, value } of Array.from(this.all()).slice(start, end)) db.set(key, value);
 
     return db;
   }
@@ -448,12 +419,10 @@ export default class Database<V = any> {
   public some(callback: (value: V, index: number, key: string, Database: this) => boolean): boolean {
     Validator.function(callback);
 
-    const data = this.all();
-
-    for (let index = 0; index < data.length; index++) {
-      const { key, value } = data[index];
-
+    let index: number = 0;
+    for (const { key, value } of this.all()) {
       if (callback(value, index, key, this)) return true;
+      index++;
     }
 
     return false;
@@ -474,6 +443,42 @@ export default class Database<V = any> {
     });
 
     return size - this.size;
+  }
+
+  /**
+   * Retrieves all keys and values as separate arrays.
+   * @returns An object containing the keys and values arrays.
+   */
+  public toArray(): { keys: string[], values: V[] } {
+    const keys: string[] = [];
+    const values: V[] = [];
+
+    const data = this.options.driver.toSet();
+
+    for (const { key, value } of data) {
+      keys.push(key);
+      values.push(value);
+    }
+
+    return { keys, values };
+  }
+
+  /**
+   * Converts the cache to two Sets, one for keys and one for values.
+   * @returns A tuple containing two Sets: one for keys and one for values.
+   */
+  public toSet(): [Set<string>, Set<V>] {
+    const array = this.toArray();
+
+    return [new Set(array.keys), new Set(array.values)];
+  }
+  
+  /**
+   * Retrieves all entries in the database as a JSON object.
+   * @returns A JSON object containing all entries.
+   */
+  public toJSON(): Record<string, V> {
+    return this.options.driver.toJSON();
   }
 
   /**
@@ -508,6 +513,8 @@ export default class Database<V = any> {
 
     Validator.number(options.spaces);
 
-    return options as _DatabaseOptions;
+    return Validator.ObjectValidation({
+      driver: Validator.InstanceValidation(MemoryDriver),
+    }).parse(options);
   }
 }

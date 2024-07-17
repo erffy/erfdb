@@ -43,7 +43,7 @@ for (let i = 0; i < 50; i++) db2.set(`key-${i}`, i);
 */
 
 db.all(); // db.all(5);
-db.array();
+db.toArray();
 db.at('k:0'); // db.at('v:0');
 db.clone();
 db.concat(db2);
@@ -55,14 +55,16 @@ db.find((e) => e === 2)?.key;
 db.get('key-5');
 db.has('key-1');
 db.intersection(db2);
-db.json();
+db.toJSON();
+db.toSet();
 db.keyOf(24);
+db.push('data', { id: 1 });
+db.pull('data', { id: 1 });
 db.map((e) => e === 24);
 db.math('key-29', '-', 2);
 db.merge(db2);
 db.partition((c) => c === 24);
 db.pick('key-5', 'key-6');
-db.pluck('key-29');
 db.reduce((e) => e * 3, 2);
 db.set('d', 0);
 db.size;

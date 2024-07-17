@@ -27,15 +27,9 @@ declare module 'erfdb' {
     /**
      * Retrieves all entries in the database.
      * @param amount The number of entries to retrieve.
-     * @returns An array of key-value pairs.
+     * @returns A Set of key-value pairs.
      */
-    public all(amount?: number): { key: string, value: V }[];
-
-    /**
-     * Retrieves the keys and values as separate arrays.
-     * @returns An object containing keys and values arrays.
-     */
-    public array(): { keys: string[], values: V[] };
+    public all(amount?: number): Set<{ key: string, value: V }>;
 
     /**
      * Retrieves a value or key based on a pattern.
@@ -122,12 +116,6 @@ declare module 'erfdb' {
     public intersection(other: Database<V>): Database<V>;
 
     /**
-     * Retrieves all entries as a JSON object.
-     * @returns A JSON object representing the database entries.
-     */
-    public json(): Record<string, V>;
-
-    /**
      * Finds the key of an entry by value.
      * @param value The value to find the key for.
      * @returns The key of the entry, or undefined if not found.
@@ -147,22 +135,6 @@ declare module 'erfdb' {
      * @throws {RangeError} If attempting to perform an invalid mathematical operation.
      */
     public math(key: string, operator: MathOperators, count: number = 1, negative: boolean = false): number;
-
-    /**
-     * Pushes a value to an array at the specified key.
-     * @param key - The key of the entry.
-     * @param value - The value to push.
-     * @returns The updated array after the push operation.
-     */
-    public push<T>(key: string, value: T): T[];
-
-    /**
-     * Pulls a value from an array at the specified key.
-     * @param key - The key of the entry.
-     * @param value - The value to pull.
-     * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
-     */
-    public pull<T>(key: string, value: T): T[] | undefined;
 
     /**
      * Maps entries to a new database based on a callback function.
@@ -186,18 +158,27 @@ declare module 'erfdb' {
     public partition(callback: (value: V, index: number, key: string, Database: this) => boolean): [Database<V>, Database<V>];
 
     /**
+     * Pushes a value to an array at the specified key.
+     * @param key - The key of the entry.
+     * @param value - The value to push.
+     * @returns The updated array after the push operation.
+     */
+    public push<T>(key: string, value: T): T[];
+
+    /**
+     * Pulls a value from an array at the specified key.
+     * @param key - The key of the entry.
+     * @param value - The value to pull.
+     * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
+     */
+    public pull<T>(key: string, value: T): T[] | undefined;
+
+    /**
      * Picks specific entries by keys.
      * @param keys The keys of the entries to pick.
      * @returns A new instance of the Database with picked entries.
      */
     public pick(...keys: string[]): Database<V>;
-
-    /**
-     * Plucks values of a specific key from all entries.
-     * @param keyName The key of the values to pluck.
-     * @returns An array of plucked values.
-     */
-    public pluck<T>(keyName: string): T[];
 
     /**
      * Reduces the entries to a single value based on a callback function.
@@ -222,6 +203,24 @@ declare module 'erfdb' {
      * @returns A new instance of the Database with sliced entries.
      */
     public slice(start?: number, end?: number): Database<V>;
+
+    /**
+     * Retrieves the keys and values as separate arrays.
+     * @returns An object containing keys and values arrays.
+     */
+    public toArray(): { keys: string[], values: V[] };
+
+    /**
+     * Converts the cache to two Sets, one for keys and one for values.
+     * @returns A tuple containing two Sets: one for keys and one for values.
+     */
+    public toSet(): [Set<string>, Set<V>];
+
+    /**
+     * Retrieves all entries as a JSON object.
+     * @returns A JSON object representing the database entries.
+     */
+    public toJSON(): Record<string, V>;
 
     /**
      * Checks if some entries pass the provided test.
@@ -326,13 +325,19 @@ declare module 'erfdb' {
      * Converts the cache to a JSON object.
      * @returns {Record<string, V>} The JSON representation of the cache.
      */
-    public json(): Record<string, V>;
+    public toJSON(): Record<string, V>;
 
     /**
      * Converts the cache to an array of key-value pairs.
      * @returns {{ key: string, value: V }[]} The array representation of the cache.
      */
-    public array(): { key: string, value: V }[];
+    public toArray(): { key: string, value: V }[];
+
+    /**
+     * Converts the cache to a Set of key-value pairs.
+     * @returns A Set containing objects with key-value pairs.
+     */
+    public toSet(): Set<{ key: string, value: V }>;
 
     /**
      * Executes a callback for each entry in the cache.

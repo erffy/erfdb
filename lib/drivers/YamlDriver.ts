@@ -35,6 +35,6 @@ export default class YamlDriver<V = any> extends MemoryDriver<V> {
    * @protected
    */
   protected write(): void {
-    writeFileSync(this.options.path, Buffer.from(YAML.stringify(this.json())), { encoding: 'utf-8' });
+    writeFileSync(this.options.path, Buffer.from(YAML.stringify(this.toJSON())), { encoding: 'utf-8' });
   }
 }
