@@ -62,7 +62,7 @@ export default class Database<V = any> {
     let index = Number(_index);
     if (isNaN(index)) return undefined;
     index = Math.floor(index);
-    Validator.NumberValidation.greaterThanOrEqual(0).parse(index);
+    Validator.NumberValidation.int().greaterThanOrEqual(0).lessThanOrEqual(this.size).parse(index);
 
     if (type === 'k' || type === 'key') return keys[index];
     else if (type === 'v' || type === 'value') return values[index];
@@ -75,9 +75,9 @@ export default class Database<V = any> {
    * @returns {Database<V>} A new database instance with the same entries.
    */
   public clone(contents: boolean = true): Database<V> {
-    Validator.InstanceValidation(Boolean).parse(contents);
+    Validator.BooleanValidation.parse(contents);
     // @ts-ignore
-    const clone: Database<V> = new this.constructor[Symbol.species]({ driver: new MemoryDriver(this.options) });
+    const clone: Database<V> = new this.constructor({ driver: new MemoryDriver(this.options) });
 
     if (contents) this.each((value, index, key) => clone.set(key, value));
 
@@ -152,6 +152,16 @@ export default class Database<V = any> {
   }
 
   /**
+   * Retrieves the first entry in the database.
+   * @returns The first key-value pair, or empty object if the database is empty.
+   */
+  public first(): { key: string; value: V; } | {} {
+    const data = this.find((v, i, k) => i === 0);
+
+    return data ?? {};
+  }
+
+  /**
    * Filters the database based on the provided callback.
    * @param callback - The function to test for each entry.
    * @returns A new database instance with the filtered entries.
@@ -173,12 +183,12 @@ export default class Database<V = any> {
    * @param callback - The function to test for each entry.
    * @returns The first entry that satisfies the callback, or undefined if none found.
    */
-  public find(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V } | undefined {
+  public find(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V, index: number } | undefined {
     Validator.function(callback);
 
     let index: number = 0;
     for (const { key, value } of this.all()) {
-      if (callback(value, index, key, this)) return { key, value };
+      if (callback(value, index, key, this)) return { key, value, index };
       index++;
     }
 
@@ -201,6 +211,17 @@ export default class Database<V = any> {
    */
   public has(key: string): boolean {
     return this.options.driver.has(key);
+  }
+
+  /**
+   * Returns the index of the given key.
+   * @param key - The key to find the index of.
+   * @returns The index of the key, or -1 if not found.
+   */
+  public indexOf(key: string): number {
+    const data = this.find((v, i, k) => k === key);
+
+    return data?.index ?? -1;
   }
 
   /**
@@ -227,7 +248,17 @@ export default class Database<V = any> {
   public keyOf(value: V): string | undefined {
     const entry = this.find((v) => v === value);
 
-    return entry ? entry.key : undefined;
+    return entry?.key ?? undefined;
+  }
+
+  /**
+   * Retrieves the last entry in the database.
+   * @returns The last key-value pair, or empty object if the database is empty.
+   */
+  public last(): { key: string; value: V; } | {} {
+    const data = this.find((v, i, k) => i === this.size);
+
+    return data ?? {};
   }
 
   /**
@@ -395,6 +426,18 @@ export default class Database<V = any> {
   }
 
   /**
+   * Determines the size of the value associated with the specified key if it is an array or string.
+   * @param key - The key of the entry to check.
+   * @returns The size of the value if it is an array or string, or -1 if the key does not exist or the value is not an array or string.
+   */
+  public sizeOf(key: string): number {
+    const _type = this.typeOf(Validator.string(key));
+
+    if (_type === 'array' || _type === 'string') return _type.length;
+    else return -1;
+  }
+
+  /**
    * Creates a new database with a subset of entries based on the start and end indices.
    * @param start - The starting index.
    * @param end - The ending index. Defaults to the size of the database.
@@ -472,13 +515,30 @@ export default class Database<V = any> {
 
     return [new Set(array.keys), new Set(array.values)];
   }
-  
+
   /**
    * Retrieves all entries in the database as a JSON object.
    * @returns A JSON object containing all entries.
    */
   public toJSON(): Record<string, V> {
     return this.options.driver.toJSON();
+  }
+
+  /**
+   * Determines the type of the value associated with the specified key.
+   * @param key - The key of the entry to check.
+   * @returns The type of the value ('array' if the value is an array, or the result of the typeof operator).
+   *          Returns undefined if the key does not exist.
+   */
+  public typeOf(key: string): string | undefined {
+    Validator.string(key);
+
+    if (!this.has(key)) return undefined;
+
+    const data = this.get(key);
+
+    if (Array.isArray(data)) return 'array';
+    else return (typeof data);
   }
 
   /**

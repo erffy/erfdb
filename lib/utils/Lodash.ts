@@ -97,3 +97,5 @@ export function merge(target: Record<string, any>, ...sources: Array<Record<stri
 
   return merge(target, ...sources);
 }
+
+export default { set, get, merge };

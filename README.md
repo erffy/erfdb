@@ -57,6 +57,10 @@ db.has('key-1');
 db.intersection(db2);
 db.toJSON();
 db.toSet();
+db.indexOf('key-5'); // 6
+db.last();
+db.first();
+db.typeOf('key-2'); // number
 db.keyOf(24);
 db.push('data', { id: 1 });
 db.pull('data', { id: 1 });
@@ -66,7 +70,8 @@ db.merge(db2);
 db.partition((c) => c === 24);
 db.pick('key-5', 'key-6');
 db.reduce((e) => e * 3, 2);
-db.set('d', 0);
+db.set('d', '0');
+db.sizeOf('d'); // 1
 db.size;
 db.slice(5, 5);
 db.some((e) => e === 24);

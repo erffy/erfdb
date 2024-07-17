@@ -15,6 +15,11 @@ export default class Validator {
   static NumberValidation = s.number();
 
   /**
+   * Validation schema for booleans.
+   */
+  static BooleanValidation = s.boolean();
+
+  /**
    * Validation schema for nullish values (null or undefined).
    */
   static NullishValidation = s.nullish();

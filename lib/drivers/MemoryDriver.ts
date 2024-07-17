@@ -230,7 +230,7 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
       type: Validator.StringInputValidation('json', 'bson', 'yaml', 'memory', 'custom', 'auto'),
       path: Validator.URLValidation,
       size: Validator.NumberValidation,
-      debugger: Validator.InstanceValidation(Boolean)
+      debugger: Validator.BooleanValidation
     }).parse(o);
   }
 }

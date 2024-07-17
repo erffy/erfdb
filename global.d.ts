@@ -81,6 +81,12 @@ declare module 'erfdb' {
     public every(callback: (value: V, key: string, Database: this) => boolean): boolean;
 
     /**
+     * Retrieves the first entry in the database.
+     * @returns The first key-value pair, or empty object if the database is empty.
+     */
+    public first(): { key: string; value: V; } | {};
+
+    /**
      * Filters the entries based on a test function.
      * @param callback The function to test each entry.
      * @returns A new instance of the Database with filtered entries.
@@ -92,7 +98,7 @@ declare module 'erfdb' {
      * @param callback The function to test each entry.
      * @returns The key-value pair of the found entry, or undefined if not found.
      */
-    public find(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V } | undefined;
+    public find(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V, index: number } | undefined;
 
     /**
      * Retrieves a value by key.
@@ -109,6 +115,13 @@ declare module 'erfdb' {
     public has(key: string): boolean;
 
     /**
+     * Returns the index of the given key.
+     * @param key - The key to find the index of.
+     * @returns The index of the key, or -1 if not found.
+     */
+    public indexOf(key: string): number;
+
+    /**
      * Creates a new database with entries that exist in both databases.
      * @param other The other database to intersect with.
      * @returns A new instance of the Database with intersected entries.
@@ -121,6 +134,12 @@ declare module 'erfdb' {
      * @returns The key of the entry, or undefined if not found.
      */
     public keyOf(value: V): string | undefined;
+
+    /**
+     * Retrieves the last entry in the database.
+     * @returns The last key-value pair, or empty object if the database is empty.
+     */
+    public last(): { key: string; value: V; } | {};
 
     /**
      * Performs mathematical operations on a numeric value stored in the cache.
@@ -163,7 +182,7 @@ declare module 'erfdb' {
      * @param value - The value to push.
      * @returns The updated array after the push operation.
      */
-    public push<T>(key: string, value: T): T[];
+    public push(key: string, value: V): V[];
 
     /**
      * Pulls a value from an array at the specified key.
@@ -171,7 +190,7 @@ declare module 'erfdb' {
      * @param value - The value to pull.
      * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
      */
-    public pull<T>(key: string, value: T): T[] | undefined;
+    public pull(key: string, value: V): V[] | undefined;
 
     /**
      * Picks specific entries by keys.
@@ -195,6 +214,13 @@ declare module 'erfdb' {
      * @returns The set value.
      */
     public set(key: string, value: V): V;
+
+    /**
+     * Determines the size of the value associated with the specified key if it is an array or string.
+     * @param key - The key of the entry to check.
+     * @returns The size of the value if it is an array or string, or -1 if the key does not exist or the value is not an array or string.
+     */
+    public sizeOf(key: string): number;
 
     /**
      * Slices entries from the database.
@@ -221,6 +247,14 @@ declare module 'erfdb' {
      * @returns A JSON object representing the database entries.
      */
     public toJSON(): Record<string, V>;
+
+    /**
+     * Determines the type of the value associated with the specified key.
+     * @param key - The key of the entry to check.
+     * @returns The type of the value ('array' if the value is an array, or the result of the typeof operator).
+     *          Returns undefined if the key does not exist.
+     */
+    public typeOf(key: string): string | undefined;
 
     /**
      * Checks if some entries pass the provided test.
@@ -253,16 +287,17 @@ declare module 'erfdb' {
     static checkOptions<T>(options?: DatabaseOptions<T>): _DatabaseOptions<T>;
   }
 
+  import EventEmitter from 'erfevents';
+
   /**
    * MemoryDriver is a class that manages an in-memory cache with support for various operations
    * such as setting, getting, deleting, and iterating over key-value pairs.
+   * @extends EventEmitter<DriverEvents<V>>
    * @template V The type of the values stored in the cache.
    */
-  class MemoryDriver<V = any> {
+  class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>> {
     protected readonly _cache: Map<string, V>;
-    protected readonly file!: import('bun').BunFile;
-    protected readonly writer!: import('bun').FileSink;
-    public readonly options: _MemoryDriverOptions;
+    protected readonly options: _MemoryDriverOptions;
 
     /**
      * Creates an instance of MemoryDriver.
@@ -274,7 +309,7 @@ declare module 'erfdb' {
      * Gets the in-memory cache.
      * @returns The in-memory cache.
      */
-    public get cache(): typeof this._cache;
+    public get cache(): Readonly<typeof this._cache>;
 
     /**
      * Iterator for the driver entries.
