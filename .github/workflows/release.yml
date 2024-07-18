@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Set up Git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          version=$(jq -r '.version' package.json)
+          echo "VERSION=$version" >> $GITHUB_ENV
+
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          if git show-ref --tags | grep -q "refs/tags/"; then
+            prev_tag=$(git describe --tags --abbrev=0 HEAD^)
+          else
+            echo "No previous tag found, creating initial release."
+            prev_tag=""
+          fi
+          echo "PREV_TAG=$prev_tag" >> $GITHUB_ENV
+
+      - name: Generate ChangeLog
+        id: generate_changelog
+        run: |
+          if [ -z "${{ env.PREV_TAG }}" ]; then
+            changelog=$(git log --oneline)
+          else
+            changelog=$(git log --oneline ${{ env.PREV_TAG }}..HEAD)
+          fi
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$changelog" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Git Tag
+        if: success()
+        run: |
+          git tag -a v${{ env.VERSION }} -m "Version ${{ env.VERSION }}"
+
+      - name: Push Git Tag
+        if: success()
+        run: |
+          git push origin v${{ env.VERSION }}
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          prerelease: ${{ contains(env.VERSION, 'rc') }}
+          body: |
+            ### ChangeLog
+            ${{ env.CHANGELOG }}
