@@ -353,10 +353,10 @@ export default class Database<V = any> {
    * @param value - The value to push.
    * @returns The updated array after the push operation.
    */
-  public push<T>(key: string, value: T): T[] {
+  public push(key: string, value: V): V[] {
     const data = this.get(key);
 
-    if (!Array.isArray(data)) return this.set(key, [value] as V) as T[];
+    if (!Array.isArray(data)) return this.set(key, [value] as V) as V[];
 
     data.push(value);
     this.set(key, data as V);
@@ -370,7 +370,7 @@ export default class Database<V = any> {
    * @param value - The value to pull.
    * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
    */
-  public pull<T>(key: string, value: T): T[] | undefined {
+  public pull(key: string, value: V): V[] | undefined {
     const data = this.get(key);
     if (!Array.isArray(data)) return undefined;
 
@@ -394,7 +394,9 @@ export default class Database<V = any> {
     const db: Database<V> = this.clone();
 
     for (const key of keys) {
-      if (this.has(key)) db.set(key, this.get(key)!);
+      if (!this.has(key)) continue;
+
+      db.set(key, this.get(key)!);
     }
 
     return db;
@@ -482,7 +484,9 @@ export default class Database<V = any> {
     const size = this.size;
 
     this.each((value, index, key, db) => {
-      if (callback(value, key, db)) this.del(key);
+      if (!callback(value, key, db)) return;
+
+      this.del(key);
     });
 
     return size - this.size;
