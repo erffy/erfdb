@@ -2,14 +2,20 @@ name: Release
 
 on:
   push:
+    branches:
+      - main
   workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Trigger release for version bump'
+        required: false
+        default: 'false'
 
 jobs:
   create:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@main
 
       - name: Set up Git
@@ -17,50 +23,44 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Get version from package.json
-        id: get_version
-        run: |
-          version=$(jq -r '.version' package.json)
-          echo "VERSION=$version" >> $GITHUB_ENV
+      - name: Fetch all tags
+        run: git fetch --tags
 
-      - name: Get previous tag
+      - name: Get current version from package.json
+        run: |
+          echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Get previous release tag
         id: get_previous_tag
         run: |
-          if git show-ref --tags | grep -q "refs/tags/"; then
-            prev_tag=$(git describe --tags --abbrev=0 HEAD^)
-          else
-            echo "No previous tag found, creating initial release."
-            prev_tag=""
-          fi
-          echo "PREV_TAG=$prev_tag" >> $GITHUB_ENV
+          latest_tag=$(gh release list --limit 1 --json tagName | jq -r '.[0].tagName')
+          echo "PREV_RELEASE=$latest_tag" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Check if version has been released
+        id: check_if_released
+        run: |
+          gh release view ${{ env.VERSION }} && echo "RELEASED=true" >> $GITHUB_ENV || echo "RELEASED=false" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Generate ChangeLog
-        id: generate_changelog
+        if: success() && env.RELEASED == 'false'
         run: |
-          if [ -z "${{ env.PREV_TAG }}" ]; then
-            changelog=$(git log --oneline)
-          else
-            changelog=$(git log --oneline ${{ env.PREV_TAG }}..HEAD)
-          fi
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$changelog" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          changelog=$(git log ${{ env.PREV_RELEASE }}..HEAD --oneline)
+          echo "CHANGELOG=$changelog" >> $GITHUB_ENV
 
-      - name: Create Git Tag
-        if: success()
+      - name: Create Git Tag and Push
+        if: success() && env.RELEASED == 'false'
         run: |
-          git tag -a v${{ env.VERSION }} -m "Version ${{ env.VERSION }}"
-
-      - name: Push Git Tag
-        if: success()
-        run: |
-          git push origin v${{ env.VERSION }}
+          git tag -a "${{ env.VERSION }}" -m "Version ${{ env.VERSION }}"
+          git push origin "${{ env.VERSION }}"
+          echo "TAG_CREATED=true" >> $GITHUB_ENV
 
       - name: Create Release
-        id: create_release
+        if: success() && env.TAG_CREATED == 'true'
         uses: softprops/action-gh-release@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.VERSION }}
           release_name: ${{ env.VERSION }}
@@ -68,3 +68,5 @@ jobs:
           body: |
             ### ChangeLog
             ${{ env.CHANGELOG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
