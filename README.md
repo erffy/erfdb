@@ -10,6 +10,7 @@
 - ♻️ Modern: Fully compatible with both ESM (ECMAScript Modules) and CJS (CommonJS), ensuring seamless integration with modern JavaScript environments.
 
 ### Installation
+Note: Before installation, you need to install 'typescript' globally with the package manager you use.
 ```sh
 npm install erffy/erfdb
 pnpm add erffy/erfdb
