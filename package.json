@@ -21,7 +21,7 @@
     "graceful-fs": "4.2"
   },
   "peerDependencies": {
-    "bson": "6.8",
+    "bson": "6.9",
     "typescript": "5.5",
     "yaml": "2.5"
   },
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@types/graceful-fs": "latest",
     "@types/node": "latest",
-    "bson": "6.8",
+    "bson": "6.9",
     "yaml": "2.5"
   }
 }
