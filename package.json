@@ -1,7 +1,7 @@
 {
   "name": "erfdb",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "erffy",
   "repository": {
     "url": "git://github.com/erffy/erfdb.git"
@@ -17,13 +17,12 @@
   },
   "dependencies": {
     "@sapphire/shapeshift": "4.0",
-    "erfevents": "github:erffy/erfevents",
     "graceful-fs": "4.2"
   },
   "peerDependencies": {
-    "bson": "6.8",
+    "bson": "6.10",
     "typescript": "5.5",
-    "yaml": "2.5"
+    "yaml": "2.6"
   },
   "peerDependenciesMeta": {
     "yaml": {
@@ -36,7 +35,7 @@
   "devDependencies": {
     "@types/graceful-fs": "latest",
     "@types/node": "latest",
-    "bson": "6.8",
-    "yaml": "2.5"
+    "bson": "6.10",
+    "yaml": "2.6"
   }
 }
