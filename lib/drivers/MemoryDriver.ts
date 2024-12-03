@@ -3,14 +3,12 @@ import Validator from '../utils/Validator';
 
 import { existsSync, unlinkSync } from 'graceful-fs';
 
-import EventEmitter from 'erfevents';
-
 /**
  * MemoryDriver is a class that manages an in-memory cache with support for various operations
  * such as setting, getting, deleting, and iterating over key-value pairs.
  * @template V The type of the values stored in the cache.
  */
-export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>> {
+export default class MemoryDriver<V = any> {
   protected readonly _cache: Map<string, V> = new Map();
   protected readonly options: _MemoryDriverOptions;
 
@@ -19,8 +17,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
    * @param {MemoryDriverOptions} [options={}] The options for the memory driver.
    */
   public constructor(options: MemoryDriverOptions = {}) {
-    super();
-
     // @ts-ignore
     this.options = this.constructor.checkOptions({ ...options, type: 'memory' });
 
@@ -68,8 +64,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
 
     this.cache.set(Validator.string(key), Validator.any(value));
 
-    if (this.options.debugger) this.emit('changed', [key, value]);
-
     return value;
   }
 
@@ -81,8 +75,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
   public get(key: string): V | undefined {
     const data = this.cache.get(Validator.string(key));
 
-    if (this.options.debugger) this.emit('fetch', key, data);
-
     return data;
   }
 
@@ -92,11 +84,7 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
    * @returns {boolean} True if the key exists, false otherwise.
    */
   public has(key: string): boolean {
-    const data = this.cache.has(Validator.string(key));
-
-    if (this.options.debugger) this.emit('checked', key, data);
-
-    return data;
+    return this.cache.has(Validator.string(key));
   }
 
   /**
@@ -105,14 +93,7 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
    * @returns {boolean} True if the key was deleted, false otherwise.
    */
   public del(key: string): boolean {
-    if (!this.has(key)) return false;
-
-    const content = this.get(key);
-    const data = this.cache.delete(Validator.string(key));
-
-    if (this.options.debugger) this.emit('deleted', key, data, content as V);
-
-    return data;
+    return this.has(key) ? this.cache.delete(Validator.string(key)) : false;
   }
 
   /**
@@ -131,8 +112,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
     unlinkSync(path);
     _status = !existsSync(path);
 
-    if (this.options.debugger) this.emit('destroyed', this.options.path, _status);
-
     return _status;
   }
 
@@ -140,8 +119,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
    * Clears all entries in the cache.
    */
   public clear(): void {
-    if (this.options.debugger) this.emit('cleared');
-
     this.cache.clear();
   }
 
@@ -153,8 +130,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
     const data: Record<string, V> = {};
 
     for (const [key, value] of this) set(data, key, value);
-
-    if (this.options.debugger) this.emit('iteration', 'json', data);
 
     return data;
   }
@@ -169,8 +144,6 @@ export default class MemoryDriver<V = any> extends EventEmitter<DriverEvents<V>>
     const arr: { key: string, value: V }[] = [];
 
     for (const key in data) arr.push({ key, value: data[key] });
-
-    if (this.options.debugger) this.emit('iteration', 'array', arr);
 
     return arr;
   }
