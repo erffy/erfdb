@@ -37,6 +37,11 @@ export default class Validator {
   static FunctionValidation = s.instance(Function);
 
   /**
+   * Validation schema for boolean values
+   */
+  static BooleanValidation = s.boolean();
+
+  /**
    * Creates a validation schema for a specific set of string literals
    */
   static stringInput(...values: string[]): ReturnType<typeof s['union']> {
@@ -52,6 +57,14 @@ export default class Validator {
   static validate<T>(schema: ReturnType<typeof s[keyof typeof s]>, value: any): T {
     // @ts-ignore
     return schema.parse(value);
+  }
+
+  static boolean(value: any, options?: { exact?: boolean }): boolean {
+    let validation = this.BooleanValidation;
+
+    if (options?.exact !== undefined) validation = s.literal(options.exact);
+
+    return this.validate(validation, value);
   }
 
   /**
