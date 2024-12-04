@@ -75,7 +75,7 @@ export default class Database<V = any> {
    * @returns {Database<V>} A new database instance with the same entries.
    */
   public clone(contents: boolean = true): Database<V> {
-    Validator.BooleanValidation.parse(contents);
+    Validator.boolean(contents);
     // @ts-ignore
     const clone: Database<V> = new this.constructor({ driver: new MemoryDriver(this.options) });
 
@@ -219,9 +219,7 @@ export default class Database<V = any> {
    * @returns The index of the key, or -1 if not found.
    */
   public indexOf(key: string): number {
-    const data = this.find((v, i, k) => k === key);
-
-    return data?.index ?? -1;
+    return this.find((v, i, k) => k === key)?.index ?? -1;
   }
 
   /**
@@ -246,9 +244,7 @@ export default class Database<V = any> {
    * @returns The key associated with the value, or undefined if not found.
    */
   public keyOf(value: V): string | undefined {
-    const entry = this.find((v) => v === value);
-
-    return entry?.key ?? undefined;
+    return this.find((v) => v === value)?.key ?? undefined;
   }
 
   /**
@@ -256,9 +252,7 @@ export default class Database<V = any> {
    * @returns The last key-value pair, or empty object if the database is empty.
    */
   public last(): { key: string; value: V; } | {} {
-    const data = this.find((v, i, k) => i === this.size);
-
-    return data ?? {};
+    return this.find((v, i, k) => i === this.size) ?? {};
   }
 
   /**
@@ -274,7 +268,7 @@ export default class Database<V = any> {
    * @throws {RangeError} If attempting to perform an invalid mathematical operation.
    */
   public math(key: string, operator: MathOperators, count: number = 1, negative: boolean = false): number {
-    Validator.StringInputValidation('+', '-', '*', '**', '%', '/').parse(operator);
+    Validator.stringInput('+', '-', '*', '**', '%', '/').parse(operator);
     Validator.NumberValidation.greaterThan(1).parse(count);
 
     if (!this.has(key)) this.set(key, 0 as V);
@@ -553,11 +547,7 @@ export default class Database<V = any> {
    * @returns The value associated with the specified key, or undefined if the key is not found.
    */
   public valueOf(key: string): V | undefined {
-    Validator.string(key);
-
-    const entry = this.find((v, i, k) => k === key);
-
-    return entry ? entry.value : undefined;
+    return this.find((v, i, k) => k === Validator.string(key))?.value ?? undefined;
   }
 
   /**
@@ -576,9 +566,8 @@ export default class Database<V = any> {
     options.driver ??= new MemoryDriver(options);
 
     Validator.number(options.spaces);
+    Validator.instance(options?.driver, MemoryDriver);
 
-    return Validator.ObjectValidation({
-      driver: Validator.InstanceValidation(MemoryDriver),
-    }).parse(options);
+    return options as _DatabaseOptions;
   }
 }
