@@ -1,138 +1,137 @@
 import { s } from '@sapphire/shapeshift';
 
-/**
- * Utility class for validating various data types
- */
 export default class Validator {
   /**
-   * Validation schema for strings.
+   * Validation schema for strings
    */
   static StringValidation = s.string();
 
   /**
-   * Validation schema for integers.
+   * Validation schema for numbers
    */
   static NumberValidation = s.number();
 
   /**
-   * Validation schema for booleans.
-   */
-  static BooleanValidation = s.boolean();
-
-  /**
-   * Validation schema for nullish values (null or undefined).
+   * Validation schema for nullish values (null or undefined)
    */
   static NullishValidation = s.nullish();
 
   /**
-   * Validation schema for any type of value.
+   * Validation schema for any type of value
    */
   static AnyValidation = s.any();
 
   /**
-   * Validation schema for objects.
+   * Validation schema for objects
    */
-  static ObjectValidation = s.object;
+  static ObjectValidation = s.object({});
 
   /**
-   * Validation schema for URLs.
+   * Validation schema for URL instances
    */
   static URLValidation = s.instance(URL);
 
   /**
-   * Validation schema for functions.
+   * Validation schema for function instances
    */
   static FunctionValidation = s.instance(Function);
 
   /**
-   * Validation schema for input against a list of string literals.
+   * Creates a validation schema for a specific set of string literals
    */
-  static StringInputValidation = (...values: any[]) => s.union(values.map((value) => s.literal(value)));
-
-  /**
-   * Validation schema for instances.
-   */
-  static InstanceValidation = s.instance;
-
-  /**
-   * Validates a string.
-   * @param {any} value - The input to validate.
-   * @returns {any} The validated string.
-   */
-  static string(value: any): any {
-    return this.StringValidation.parse(value);
+  static stringInput(...values: string[]): ReturnType<typeof s['union']> {
+    if (values.length === 0) {
+      throw new Error('At least one value must be provided for stringInput.');
+    }
+    return s.union(values.map((value) => s.literal(value)));
   }
 
   /**
-   * Validates a number.
-   * @param {any} i - The input to validate.
-   * @returns {any} The validated number.
+   * Generic validation method for parsing and validating values against a schema
    */
-  static number(value: any): any {
-    return this.NumberValidation.int().parse(value);
+  static validate<T>(schema: ReturnType<typeof s[keyof typeof s]>, value: any): T {
+    // @ts-ignore
+    return schema.parse(value);
   }
 
   /**
-   * Validates nullish values (null or undefined).
-   * @param {any} i - The input to validate.
-   * @returns {any} The validated nullish value.
+   * Validates a string with optional length constraints
    */
-  static nullish(value: any): any {
-    return this.NullishValidation.parse(value);
+  static string(value: any, options?: { minLength?: number; maxLength?: number }): string {
+    let validation = this.StringValidation;
+
+    if (options?.minLength !== undefined) validation = validation.lengthGreaterThanOrEqual(options.minLength);
+    if (options?.maxLength !== undefined) validation = validation.lengthLessThanOrEqual(options.maxLength);
+
+    return this.validate(validation, value);
   }
 
   /**
-   * Validates any type of value.
-   * @param {any} i - The input to validate.
-   * @returns {any} The validated value.
+   * Validates a number with optional range and integer constraints
    */
-  static any(value: any): any {
-    return this.AnyValidation.parse(value);
+  static number(value: any, options?: { min?: number; max?: number; integer?: boolean }): number {
+    let validation = this.NumberValidation;
+
+    if (options?.min !== undefined) validation = validation.greaterThanOrEqual(options.min);
+    if (options?.max !== undefined) validation = validation.lessThanOrEqual(options.max);
+    if (options?.integer === true) validation = validation.int();
+
+    return this.validate(validation, value);
   }
 
   /**
-   * Validates an object.
-   * @param {any} i - The input to validate.
-   * @returns {any} The validated object.
+   * Validates an object with optional schema validation
    */
-  static object(value: any): any {
-    return this.ObjectValidation(value);
+  static object<T extends Record<string, any>>(value: any, schema?: Record<string, ReturnType<typeof s[keyof typeof s]>>): T {
+    let validation = this.ObjectValidation;
+
+    if (schema) validation = s.object(schema);
+
+    return this.validate(validation, value);
   }
 
   /**
-   * Validates a URL instance.
-   * @param {any} i - The input to validate.
-   * @returns {any} The validated URL instance.
+   * Validates an array with optional type and length constraints
    */
-  static url(value: any): any {
-    return this.URLValidation.parse(value);
+  static array<T>(value: any, options?: { itemValidation?: ReturnType<typeof s[keyof typeof s]>; minLength?: number; maxLength?: number }): T[] {
+    let validation = s.array(options?.itemValidation ?? s.any());
+
+    if (options?.minLength !== undefined) validation = validation.lengthGreaterThanOrEqual(options.minLength);
+    if (options?.maxLength !== undefined) validation = validation.lengthLessThanOrEqual(options.maxLength);
+
+    return this.validate(validation, value);
   }
 
   /**
-   * Validates a function instance.
-   * @param {any} i - The input to validate.
-   * @returns {any} The validated function instance.
+   * Validates a value against an enum type
    */
-  static function(value: any): any {
-    return this.FunctionValidation.parse(value);
+  static enum<T extends Record<string, string | number>>(enumObj: T, value: any): T[keyof T] {
+    const literals = Object.values(enumObj).map((v) => s.literal(v));
+    if (!literals.length) throw new Error('The enum object must have at least one value.');
+    
+    return this.validate(s.union(literals), value);
   }
 
   /**
-   * Validates input against a list of string literals.
-   * @param {...any[]} i - The input to validate.
-   * @returns {any} The validated input against the list of string literals.
+   * Validates an instance of a specific class or constructor
    */
-  static stringInput(...value: any[]): any {
-    return this.StringInputValidation(value);
+  static instance<T>(constructor: new (...args: any[]) => T, value: any): T {
+    return this.validate(s.instance(constructor), value);
   }
 
   /**
-   * Validates an instance against a given class or constructor.
-   * @param i The class or constructor function.
-   * @param value The instance to validate.
-   * @returns The validated instance.
+   * Validates a function with optional arity constraints
+   * @param value - The value to validate
+   * @param options - Optional configuration for function validation
+   * @param options.arity - The exact number of expected arguments for the function
+   * @returns The validated function
+   * @throws {ValidationError} If validation fails
    */
-  static instance(i: any, value: any): any {
-    return this.InstanceValidation(i).parse(value);
+  static function(value: any, options?: { arity?: number }): Function {
+    const func = this.validate(this.FunctionValidation, value);
+    // @ts-ignore
+    if (options?.arity !== undefined && func.length !== options.arity) throw new Error(`Expected function to have ${options.arity} arguments, but got ${func.length}.`);
+    // @ts-ignore
+    return func;
   }
 }
