@@ -25,9 +25,9 @@
   "scripts": {
     "postinstall": "tsc",
     "clear": "rm -rf src",
-    "test": "mocha tests/**/*.test.ts",
-    "test:watch": "mocha tests/**/*.test.ts --watch",
-    "test:coverage": "mocha tests/**/*.test.ts --coverage"
+    "test": "tap tests/*.test.ts",
+    "test:watch": "tap tests/*.test.ts --watch",
+    "test:coverage": "tap tests/*.test.ts --coverage"
   },
   "main": "src/index.js",
   "exports": {
@@ -36,7 +36,8 @@
   },
   "dependencies": {
     "@sapphire/shapeshift": "4.0",
-    "graceful-fs": "4.2"
+    "graceful-fs": "4.2",
+    "v8": "^0.1.0"
   },
   "peerDependencies": {
     "bson": "6.10",
@@ -52,13 +53,13 @@
     }
   },
   "devDependencies": {
-    "@types/chai": "latest",
     "@types/graceful-fs": "latest",
-    "@types/mocha": "latest",
     "@types/node": "latest",
+    "@types/tap": "latest",
     "bson": "6.10",
     "chai": "^5.1.2",
     "mocha": "^11.0.1",
+    "tap": "^21.0.1",
     "yaml": "2.6"
   }
 }
