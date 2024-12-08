@@ -323,13 +323,6 @@ declare module 'erfdb' {
     public setMany(entries: Record<string, V>): this;
 
     /**
-     * Determines the size of the value associated with the specified key if it is an array or string.
-     * @param {string} key - The key of the entry to check.
-     * @returns {number} The size of the value if it is an array or string, or -1 if the key does not exist or the value is not an array or string.
-     */
-    public sizeOf(key: string): number;
-
-    /**
      * Creates a new database with a subset of entries based on the start and end indices.
      * @param {number} [start=0] - The starting index.
      * @param {number} [end=this.size] - The ending index.
@@ -492,13 +485,6 @@ declare module 'erfdb' {
      * @returns {boolean} True if the key was deleted, false otherwise.
      */
     public del(key: string): boolean;
-
-    /**
-     * Deletes multiple keys at once.
-     * @param {string[]} keys Array of keys to delete
-     * @returns {number} Number of keys deleted
-     */
-    public delMany(keys: string[]): number;
 
     /**
      * Deletes the database file associated with the driver if it exists.

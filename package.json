@@ -1,7 +1,7 @@
 {
   "name": "erfdb",
   "description": "A Map-based Smartest and Fastest database module",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": "erffy",
   "repository": {
     "type": "git",
@@ -52,9 +52,9 @@
     }
   },
   "devDependencies": {
-    "@types/chai": "^5.0.1",
+    "@types/chai": "latest",
     "@types/graceful-fs": "latest",
-    "@types/mocha": "^10.0.10",
+    "@types/mocha": "latest",
     "@types/node": "latest",
     "bson": "6.10",
     "chai": "^5.1.2",

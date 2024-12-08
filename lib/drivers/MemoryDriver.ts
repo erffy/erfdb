@@ -1,7 +1,7 @@
 import { set } from '../utils/Lodash';
 import Validator from '../utils/Validator';
 
-import { existsSync, unlinkSync } from 'graceful-fs';
+import { existsSync, unlinkSync, writeFileSync } from 'graceful-fs';
 
 /**
  * MemoryDriver is a class that manages an in-memory cache with support for various operations
@@ -27,6 +27,8 @@ export default class MemoryDriver<V = any> {
         throw new ReferenceError('Database malformed');
       }
     }
+
+    if (this.constructor.name != 'MemoryDriver' && !existsSync(this.options.path)) writeFileSync(this.options.path, '{}', { encoding: 'utf8' });
   }
 
   protected read(): void {

@@ -42,6 +42,14 @@ export default class Database<V = any> {
   }
 
   /**
+   * Clears all entries in the database.
+   * @returns {void}
+   */
+  public clear(): void {
+    this.options.driver.clear();
+  }
+
+  /**
    * Retrieves all entries in the database.
    * @param {number} amount - The maximum number of entries to retrieve. Defaults to 0 (retrieve all).
    * @returns {Set<{key: string, value: V}>} A Set of key-value pairs.
@@ -505,7 +513,7 @@ export default class Database<V = any> {
   public pick(...keys: string[]): Database<V> {
     Validator.instance(Array, keys);
 
-    const db: Database<V> = this.clone();
+    const db: Database<V> = this.clone(false);
 
     for (const key of keys) {
       if (!this.has(key)) continue;
@@ -556,18 +564,6 @@ export default class Database<V = any> {
     Validator.array(entries);
     this.options.driver.setMany(entries);
     return this;
-  }
-
-  /**
-   * Determines the size of the value associated with the specified key if it is an array or string.
-   * @param {string} key - The key of the entry to check.
-   * @returns {number} The size of the value if it is an array or string, or -1 if the key does not exist or the value is not an array or string.
-   */
-  public sizeOf(key: string): number {
-    const _type = this.typeOf(Validator.string(key));
-
-    if (_type === 'array' || _type === 'string') return _type.length;
-    else return -1;
   }
 
   /**
