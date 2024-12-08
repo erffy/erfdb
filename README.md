@@ -1,13 +1,16 @@
 [![CodeQL](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql)
+[![Release](https://github.com/erffy/erfdb/actions/workflows/release.yml/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/release.yml)
+
 ## erfdb
-- A Map-based Smartest and Fastest database module
+A high-performance, type-safe database module built on Map
 
 ### Features
-- 🍃 Performance: Written in TypeScript for optimal speed and performance.
-- 🛠️ Ease of Use: Provides a basic functionality for managing the database.
-- 🔒 Security: Implements best practices to secure data storage and access.
-- 🖥️ Versatile Driver Support: Supports up to 4 drivers, providing flexibility for different storage and retrieval needs.
-- ♻️ Modern: Fully compatible with both ESM (ECMAScript Modules) and CJS (CommonJS), ensuring seamless integration with modern JavaScript environments.
+- 🚀 **High Performance** - Built with TypeScript and optimized for speed
+- 🛡️ **Type Safety** - Full TypeScript support with comprehensive type definitions
+- 🔌 **Multiple Drivers** - Support for JSON, YAML, BSON and in-memory storage
+- 🔄 **Modern JavaScript** - Compatible with both ESM and CommonJS
+- 🛠️ **Rich API** - Extensive set of utility methods for data manipulation
+- 🔒 **Data Security** - Implements best practices for secure data handling
 
 ### Installation
 Note: Before installation, you need to install 'typescript' globally with the package manager you use.
@@ -43,40 +46,67 @@ for (let i = 0; i < 200; i++) db.set(`key-${i}`, i);
 for (let i = 0; i < 50; i++) db2.set(`key-${i}`, i);
 */
 
-db.all(); // db.all(5);
-db.toArray();
-db.at('k:0'); // db.at('v:0');
-db.clone();
-db.concat(db2);
-db.del('key-25');
-db.each((e) => typeof e);
-db.every((e) => e === 28);
-db.filter((e) => typeof e === 'number');
-db.find((e) => e === 2)?.key;
-db.get('key-5');
-db.has('key-1');
-db.intersection(db2);
-db.toJSON();
-db.toSet();
-db.indexOf('key-5'); // 6
-db.last();
-db.first();
-db.typeOf('key-2'); // number
-db.keyOf(24);
-db.push('data', { id: 1 });
-db.pull('data', { id: 1 });
-db.map((e) => e === 24);
-db.math('key-29', '-', 2);
-db.merge(db2);
-db.partition((c) => c === 24);
-db.pick('key-5', 'key-6');
-db.reduce((e) => e * 3, 2);
-db.set('d', '0');
-db.sizeOf('d'); // 1
-db.size;
-db.slice(5, 5);
-db.some((e) => e === 24);
-db.sweep((e) => e);
+// Get all entries (optionally limit to first 5)
+db.all(); // Returns all entries
+db.all(5); // Returns first 5 entries
+
+// Convert to different formats
+db.toArray(); // Convert to array of {key, value} objects
+db.toJSON(); // Convert to plain object
+db.toSet(); // Convert to Set of {key, value} objects
+
+// Access and check entries
+db.at('key:test'); // Get entry by key path
+db.at('value:123'); // Get entry by value
+db.get('users.john'); // Get value by key
+db.getMany(['users.john', 'users.jane']); // Get multiple values
+db.has('key-1'); // Check if key exists
+db.typeOf('users.age'); // Get type of value
+db.sizeOf('users'); // Get size of value
+db.size; // Get total number of entries
+
+// Find entries
+db.find(user => user.age > 18); // Find first matching entry
+db.keyOf('john'); // Get key for value
+db.indexOf('key-5'); // Get index of key
+
+// Navigate entries
+db.first(); // Get first entry
+db.last(); // Get last entry
+db.slice(5, 10); // Get entries from index 5 to 10
+
+// Modify entries
+db.set('users.john', {name: 'John'}); // Set value
+db.setMany([['user1', data1], ['user2', data2]]); // Set multiple entries
+db.del('users.jane'); // Delete entry
+db.delMany(['user1', 'user2']); // Delete multiple entries
+db.push('users.john.roles', 'admin'); // Add to array
+db.pull('users.john.roles', 'admin'); // Remove from array
+db.math('score', '+', 10); // Perform math operation
+
+// Iterate and transform
+db.each((value, key) => console.log(key, value)); // Iterate entries
+db.map(value => value * 2); // Transform values
+db.filter(user => user.age >= 18); // Filter entries
+db.reduce((sum, value) => sum + value, 0); // Reduce to single value
+db.partition(user => user.age >= 18); // Split into two arrays
+db.sweep(value => value === null); // Remove entries matching condition
+
+// Combine databases
+db.clone(); // Create copy
+db.concat(otherDb); // Combine databases
+db.merge(otherDb); // Merge databases
+db.intersection(otherDb); // Get common entries
+
+// Check conditions
+db.every(num => num > 0); // Test if all match
+db.some(num => num > 100); // Test if any match
+
+// Select entries
+db.pick('user.name', 'user.email'); // Get specific entries
+
+// Clear database
+db.clear(); // Remove all entries
 ```
 
 <br>

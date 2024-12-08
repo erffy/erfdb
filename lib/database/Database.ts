@@ -521,20 +521,6 @@ export default class Database<V = any> {
   }
 
   /**
-   * Creates a random key that doesn't exist in the database.
-   * @param {number} [length=10] - Length of the key to generate.
-   * @returns {string} A unique random key.
-   */
-  public randomKey(length: number = 10): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let key: string;
-    do {
-      key = Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    } while (this.has(key));
-    return key;
-  }
-
-  /**
    * Reduces the entries in the database to a single value based on the provided callback and initial value.
    * @param {Function} callback - The function to execute on each entry.
    * @param {R} callback.accumulator - The accumulator value.
