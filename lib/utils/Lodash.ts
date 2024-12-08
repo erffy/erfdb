@@ -28,6 +28,10 @@ export function set(object: Record<string, any>, path: string, value?: unknown):
   for (let index = 0; index < keys.length - 1; index++) {
     const key = keys[index];
 
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      throw new TypeError('Invalid key in path');
+    }
+
     if (!Object.prototype.hasOwnProperty.call(current, key)) {
       if (key.includes('[')) {
         const arrayKey = key.substring(0, key.indexOf('['));
@@ -52,6 +56,9 @@ export function set(object: Record<string, any>, path: string, value?: unknown):
   }
 
   const finalKey = keys[keys.length - 1];
+  if (finalKey === '__proto__' || finalKey === 'constructor' || finalKey === 'prototype') {
+    throw new TypeError('Invalid key in path');
+  }
   if (finalKey.includes('[')) {
     const arrayKey = finalKey.substring(0, finalKey.indexOf('['));
     const arrayIndex = Number(finalKey.substring(finalKey.indexOf('[') + 1, finalKey.indexOf(']')));
