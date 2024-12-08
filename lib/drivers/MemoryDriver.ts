@@ -11,6 +11,7 @@ import { existsSync, unlinkSync } from 'graceful-fs';
 export default class MemoryDriver<V = any> {
   protected readonly _cache: Map<string, V> = new Map();
   protected readonly options: _MemoryDriverOptions;
+  private _size: number = 0; // Cache size for O(1) access
 
   /**
    * Creates an instance of MemoryDriver.
@@ -50,7 +51,7 @@ export default class MemoryDriver<V = any> {
    * @returns {number} The size of the cache.
    */
   public get size(): number {
-    return this.cache.size;
+    return this._size;
   }
 
   /**
@@ -60,11 +61,25 @@ export default class MemoryDriver<V = any> {
    * @returns {V} The set value.
    */
   public set(key: string, value: V): V {
-    if (this.options.size != 0 && (this.size > this.options.size)) throw new RangeError(`Database limit exceeded. (${this.size}/${this.options.size})`);
+    if (this.options.size != 0 && (this._size >= this.options.size)) throw new RangeError(`Database limit exceeded. (${this._size}/${this.options.size})`);
 
-    this.cache.set(Validator.string(key), Validator.any(value));
+    const validKey = Validator.string(key);
+    if (!this.cache.has(validKey)) this._size++;
+
+    this.cache.set(validKey, value);
 
     return value;
+  }
+
+  /**
+   * Sets multiple key-value pairs at once.
+   * @param {Array<[string, V]>} entries Array of key-value pairs
+   * @returns {this} The driver instance
+   */
+  public setMany(entries: Array<[string, V]>): this {
+    for (const [key, value] of entries) this.set(key, value);
+
+    return this;
   }
 
   /**
@@ -73,9 +88,16 @@ export default class MemoryDriver<V = any> {
    * @returns {V | undefined} The value associated with the key, or undefined if the key does not exist.
    */
   public get(key: string): V | undefined {
-    const data = this.cache.get(Validator.string(key));
+    return this.cache.get(Validator.string(key));
+  }
 
-    return data;
+  /**
+   * Gets multiple values at once.
+   * @param {string[]} keys Array of keys to get
+   * @returns {Array<V | undefined>} Array of values
+   */
+  public getMany(keys: string[]): Array<V | undefined> {
+    return keys.map(key => this.get(key));
   }
 
   /**
@@ -93,7 +115,28 @@ export default class MemoryDriver<V = any> {
    * @returns {boolean} True if the key was deleted, false otherwise.
    */
   public del(key: string): boolean {
-    return this.has(key) ? this.cache.delete(Validator.string(key)) : false;
+    const validKey = Validator.string(key);
+    if (this.cache.delete(validKey)) {
+      this._size--;
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Deletes multiple keys at once.
+   * @param {string[]} keys Array of keys to delete
+   * @returns {number} Number of keys deleted
+   */
+  public delMany(keys: string[]): number {
+    let deleted = 0;
+
+    for (const key of keys) {
+      if (this.del(key)) deleted++;
+    }
+
+    return deleted;
   }
 
   /**
@@ -103,16 +146,14 @@ export default class MemoryDriver<V = any> {
    * @returns {boolean} True if the database file was successfully deleted, false otherwise.
    */
   public destroy(): boolean {
-    let _status: boolean = false;
+    if (this.constructor.name === 'MemoryDriver') return false;
 
-    if (this.constructor.name === 'MemoryDriver') _status = false;
-
-    const path = this.options.path;
-
-    unlinkSync(path);
-    _status = !existsSync(path);
-
-    return _status;
+    try {
+      unlinkSync(this.options.path);
+      return !existsSync(this.options.path);
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -120,6 +161,7 @@ export default class MemoryDriver<V = any> {
    */
   public clear(): void {
     this.cache.clear();
+    this._size = 0;
   }
 
   /**
@@ -129,7 +171,7 @@ export default class MemoryDriver<V = any> {
   public toJSON(): Record<string, V> {
     const data: Record<string, V> = {};
 
-    for (const [key, value] of this) set(data, key, value);
+    for (const [key, value] of this.cache) set(data, key, value);
 
     return data;
   }
@@ -139,11 +181,10 @@ export default class MemoryDriver<V = any> {
    * @returns {{ key: string, value: V }[]} The array representation of the cache.
    */
   public toArray(): { key: string, value: V }[] {
-    const data = this.toJSON();
+    const arr: { key: string, value: V }[] = new Array(this._size);
+    let i = 0;
 
-    const arr: { key: string, value: V }[] = [];
-
-    for (const key in data) arr.push({ key, value: data[key] });
+    for (const [key, value] of this.cache) arr[i++] = { key, value };
 
     return arr;
   }
@@ -163,7 +204,7 @@ export default class MemoryDriver<V = any> {
   public each(callback: (value: V, key: string, Driver: this) => void): void {
     Validator.function(callback);
 
-    for (const [key, value] of this) callback(value, key, this);
+    for (const [key, value] of this.cache) callback(value, key, this);
   }
 
   /**
@@ -179,7 +220,9 @@ export default class MemoryDriver<V = any> {
     // @ts-ignore
     const _cache: MemoryDriver<V> = new this.constructor[Symbol.species](this.options);
 
-    for (const [key, value] of this) callback(value, key, this) ? _cache.set(key, value) : null;
+    for (const [key, value] of this.cache) {
+      if (callback(value, key, this)) _cache.set(key, value);
+    }
 
     return _cache;
   }
@@ -195,12 +238,12 @@ export default class MemoryDriver<V = any> {
     Validator.object(o);
 
     o.type ??= 'memory';
-    o.path ??= new URL(`file:///${process.cwd()}/erx.db.${o.type}`);
+    o.path ??= new URL(`file:///${process.cwd()}/erfdb.${o.type}`);
     o.size ??= 0;
     o.debugger ??= false;
 
-    return Validator.ObjectValidation({
-      type: Validator.StringInputValidation('json', 'bson', 'yaml', 'memory', 'custom', 'auto'),
+    return Validator.object({
+      type: Validator.stringInput('json', 'bson', 'yaml', 'memory', 'custom', 'auto'),
       path: Validator.URLValidation,
       size: Validator.NumberValidation,
       debugger: Validator.BooleanValidation

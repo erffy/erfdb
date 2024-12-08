@@ -3,6 +3,7 @@ import Validator from '../utils/Validator';
 
 /**
  * Represents a database for storing key-value pairs with various utility methods.
+ * @template V The type of values stored in the database. Defaults to any.
  */
 export default class Database<V = any> {
   protected readonly options: _DatabaseOptions<V>;
@@ -18,7 +19,7 @@ export default class Database<V = any> {
 
   /**
    * Iterates over the entries in the database.
-   * @yields The key-value pairs in the database.
+   * @yields {[string, V]} The key-value pairs in the database.
    */
   *[Symbol.iterator](): Iterator<[string, V]> {
     yield* this.options.driver;
@@ -26,16 +27,24 @@ export default class Database<V = any> {
 
   /**
    * Gets the size of the database.
-   * @returns The number of entries in the database.
+   * @returns {number} The number of entries in the database.
    */
   public get size(): number {
     return this.options.driver.size;
   }
 
   /**
+   * Gets whether the database is empty.
+   * @returns {boolean} True if database has no entries, false otherwise.
+   */
+  public get isEmpty(): boolean {
+    return this.size === 0;
+  }
+
+  /**
    * Retrieves all entries in the database.
-   * @param amount - The maximum number of entries to retrieve. Defaults to 0 (retrieve all).
-   * @returns A Set of key-value pairs.
+   * @param {number} amount - The maximum number of entries to retrieve. Defaults to 0 (retrieve all).
+   * @returns {Set<{key: string, value: V}>} A Set of key-value pairs.
    */
   public all(amount: number = 0): Set<{ key: string, value: V }> {
     Validator.number(amount);
@@ -47,8 +56,9 @@ export default class Database<V = any> {
 
   /**
    * Retrieves the key or value at the specified pattern.
-   * @param pattern - The pattern specifying whether to retrieve a key or value.
-   * @returns The key or value at the specified pattern, or undefined if not found.
+   * @param {string} pattern - The pattern specifying whether to retrieve a key or value (format: "key:index" or "value:index").
+   * @returns {string | V | undefined} The key or value at the specified pattern, or undefined if not found.
+   * @throws {Error} If pattern is invalid or index is out of bounds.
    */
   public at(pattern: string): string | V | undefined {
     Validator.StringValidation.regex(/^(k|key|v|value):\d+$/).parse(pattern);
@@ -71,7 +81,7 @@ export default class Database<V = any> {
 
   /**
    * Creates a clone of the database.
-   * @param contents Whether to clone the contents (default: true).
+   * @param {boolean} contents - Whether to clone the contents (default: true).
    * @returns {Database<V>} A new database instance with the same entries.
    */
   public clone(contents: boolean = true): Database<V> {
@@ -86,8 +96,9 @@ export default class Database<V = any> {
 
   /**
    * Concatenates multiple databases into one.
-   * @param databases - The databases to concatenate.
-   * @returns A new database instance with combined entries.
+   * @param {...Database<V>[]} databases - The databases to concatenate.
+   * @returns {Database<V>} A new database instance with combined entries.
+   * @throws {Error} If any argument is not a Database instance.
    */
   public concat(...databases: Database<V>[]): Database<V> {
     const _db = this.clone();
@@ -103,17 +114,29 @@ export default class Database<V = any> {
 
   /**
    * Deletes an entry by key.
-   * @param key - The key of the entry to delete.
-   * @returns True if the entry was deleted, false otherwise.
+   * @param {string} key - The key of the entry to delete.
+   * @returns {boolean} True if the entry was deleted, false otherwise.
    */
   public del(key: string): boolean {
     return this.options.driver.del(key);
   }
 
   /**
+   * Deletes multiple entries by keys.
+   * @param {...string[]} keys - The keys of entries to delete.
+   * @returns {number} Number of entries deleted.
+   */
+  public deleteMany(...keys: string[]): number {
+    let deleted = 0;
+    for (const key of keys) {
+      if (this.del(key)) deleted++;
+    }
+    return deleted;
+  }
+
+  /**
    * Deletes the database file associated with the driver if it exists.
-   *
-   * @returns True if the database file was successfully deleted, false otherwise.
+   * @returns {boolean} True if the database file was successfully deleted, false otherwise.
    */
   public destroy(): boolean {
     return this.options.driver.destroy();
@@ -121,8 +144,12 @@ export default class Database<V = any> {
 
   /**
    * Iterates over each entry in the database and calls the provided callback.
-   * @param callback - The function to call for each entry.
-   * @returns The database instance.
+   * @param {Function} callback - The function to call for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {this} The database instance.
    */
   public each(callback: (value: V, index: number, key: string, Database: this) => void): this {
     Validator.function(callback);
@@ -138,8 +165,11 @@ export default class Database<V = any> {
 
   /**
    * Checks if every entry in the database satisfies the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns True if every entry satisfies the callback, false otherwise.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {boolean} True if every entry satisfies the callback, false otherwise.
    */
   public every(callback: (value: V, key: string, Database: this) => boolean): boolean {
     Validator.function(callback);
@@ -153,7 +183,7 @@ export default class Database<V = any> {
 
   /**
    * Retrieves the first entry in the database.
-   * @returns The first key-value pair, or empty object if the database is empty.
+   * @returns {{key: string, value: V} | {}} The first key-value pair, or empty object if the database is empty.
    */
   public first(): { key: string; value: V; } | {} {
     const data = this.find((v, i, k) => i === 0);
@@ -163,8 +193,12 @@ export default class Database<V = any> {
 
   /**
    * Filters the database based on the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns A new database instance with the filtered entries.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {Database<V>} A new database instance with the filtered entries.
    */
   public filter(callback: (value: V, index: number, key: string, Database: this) => boolean): Database<V> {
     Validator.function(callback);
@@ -180,8 +214,12 @@ export default class Database<V = any> {
 
   /**
    * Finds the first entry that satisfies the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns The first entry that satisfies the callback, or undefined if none found.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {{key: string, value: V, index: number} | undefined} The first entry that satisfies the callback, or undefined if none found.
    */
   public find(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V, index: number } | undefined {
     Validator.function(callback);
@@ -196,9 +234,42 @@ export default class Database<V = any> {
   }
 
   /**
-   * Retrieves the value associated with the given key.
-   * @param key - The key of the entry to retrieve.
-   * @returns The value associated with the key, or undefined if not found.
+   * Finds all entries that satisfy the provided callback.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {Array<{key: string, value: V, index: number}>} Array of matching entries.
+   */
+  public findAll(callback: (value: V, index: number, key: string, Database: this) => boolean): { key: string, value: V, index: number }[] {
+    Validator.function(callback);
+    const results: { key: string, value: V, index: number }[] = [];
+
+    let index: number = 0;
+    for (const { key, value } of this.all()) {
+      if (callback(value, index, key, this)) {
+        results.push({ key, value, index });
+      }
+      index++;
+    }
+
+    return results;
+  }
+
+  /**
+   * Gets multiple values by their keys.
+   * @param {...string[]} keys - The keys to retrieve values for.
+   * @returns {Array<V | undefined>} Array of values in same order as keys.
+   */
+  public getMany(...keys: string[]): (V | undefined)[] {
+    return keys.map(key => this.get(key));
+  }
+
+  /**
+   * Gets the value associated with the given key.
+   * @param {string} key - The key of the entry to retrieve.
+   * @returns {V | undefined} The value associated with the key, or undefined if not found.
    */
   public get(key: string): V | undefined {
     return this.options.driver.get(key);
@@ -206,17 +277,35 @@ export default class Database<V = any> {
 
   /**
    * Checks if an entry with the given key exists.
-   * @param key - The key to check.
-   * @returns True if the entry exists, false otherwise.
+   * @param {string} key - The key to check.
+   * @returns {boolean} True if the entry exists, false otherwise.
    */
   public has(key: string): boolean {
     return this.options.driver.has(key);
   }
 
   /**
+   * Checks if multiple keys exist in the database.
+   * @param {...string[]} keys - The keys to check.
+   * @returns {boolean} True if all keys exist, false otherwise.
+   */
+  public hasAll(...keys: string[]): boolean {
+    return keys.every(key => this.has(key));
+  }
+
+  /**
+   * Checks if any of the given keys exist in the database.
+   * @param {...string[]} keys - The keys to check.
+   * @returns {boolean} True if at least one key exists, false otherwise.
+   */
+  public hasAny(...keys: string[]): boolean {
+    return keys.some(key => this.has(key));
+  }
+
+  /**
    * Returns the index of the given key.
-   * @param key - The key to find the index of.
-   * @returns The index of the key, or -1 if not found.
+   * @param {string} key - The key to find the index of.
+   * @returns {number} The index of the key, or -1 if not found.
    */
   public indexOf(key: string): number {
     return this.find((v, i, k) => k === key)?.index ?? -1;
@@ -224,8 +313,9 @@ export default class Database<V = any> {
 
   /**
    * Creates a new database with the intersection of entries from the current database and another database.
-   * @param other - The other database to intersect with.
-   * @returns A new database instance with the intersected entries.
+   * @param {Database<V>} other - The other database to intersect with.
+   * @returns {Database<V>} A new database instance with the intersected entries.
+   * @throws {Error} If other is not a Database instance.
    */
   public intersection(other: Database<V>): Database<V> {
     Validator.instance(Database, other);
@@ -240,31 +330,38 @@ export default class Database<V = any> {
 
   /**
    * Retrieves the key associated with the given value.
-   * @param value - The value to find the key for.
-   * @returns The key associated with the value, or undefined if not found.
+   * @param {V} value - The value to find the key for.
+   * @returns {string | undefined} The key associated with the value, or undefined if not found.
    */
   public keyOf(value: V): string | undefined {
     return this.find((v) => v === value)?.key ?? undefined;
   }
 
   /**
+   * Retrieves all keys associated with the given value.
+   * @param {V} value - The value to find keys for.
+   * @returns {string[]} Array of keys associated with the value.
+   */
+  public keysOf(value: V): string[] {
+    return this.findAll((v) => v === value).map(entry => entry.key);
+  }
+
+  /**
    * Retrieves the last entry in the database.
-   * @returns The last key-value pair, or empty object if the database is empty.
+   * @returns {{key: string, value: V} | {}} The last key-value pair, or empty object if the database is empty.
    */
   public last(): { key: string; value: V; } | {} {
-    return this.find((v, i, k) => i === this.size) ?? {};
+    return this.find((v, i, k) => i === this.size - 1) ?? {};
   }
 
   /**
    * Performs mathematical operations on a numeric value stored in the cache.
-   * Supported operations include addition, subtraction, multiplication, division,
-   * modulus, and exponentiation.
    * @param {string} key - The key of the numeric value in the cache.
    * @param {MathOperators} operator - The mathematical operator ('+', '-', '*', '**', '%', '/').
-   * @param {number} [count=1] - The operand for the mathematical operation (default: 1).
-   * @param {boolean} [negative=false] - Whether to allow negative results (default: false).
+   * @param {number} [count=1] - The operand for the mathematical operation.
+   * @param {boolean} [negative=false] - Whether to allow negative results.
    * @returns {number} The result of the mathematical operation.
-   * @throws {TypeError} If the operator is not one of the supported operators.
+   * @throws {TypeError} If the operator is invalid or value is not a number.
    * @throws {RangeError} If attempting to perform an invalid mathematical operation.
    */
   public math(key: string, operator: MathOperators, count: number = 1, negative: boolean = false): number {
@@ -294,8 +391,12 @@ export default class Database<V = any> {
 
   /**
    * Creates a new database with entries that satisfy the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns A new database instance with the mapped entries.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {Database<V>} A new database instance with the mapped entries.
    */
   public map(callback: (value: V, index: number, key: string, Database: this) => boolean): Database<V> {
     Validator.function(callback);
@@ -311,8 +412,9 @@ export default class Database<V = any> {
 
   /**
    * Merges another database into the current database.
-   * @param other - The other database to merge.
-   * @returns The current database instance.
+   * @param {Database<V>} other - The other database to merge.
+   * @returns {this} The current database instance.
+   * @throws {Error} If other is not a Database instance.
    */
   public merge(other: Database<V>): this {
     Validator.instance(Database, other);
@@ -324,8 +426,12 @@ export default class Database<V = any> {
 
   /**
    * Partitions the database into two databases based on the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns A tuple containing two new database instances: one with entries that satisfy the callback and one with entries that do not.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {[Database<V>, Database<V>]} A tuple containing two new database instances: one with entries that satisfy the callback and one with entries that do not.
    */
   public partition(callback: (value: V, index: number, key: string, Database: this) => boolean): [Database<V>, Database<V>] {
     Validator.function(callback);
@@ -343,9 +449,9 @@ export default class Database<V = any> {
 
   /**
    * Pushes a value to an array at the specified key.
-   * @param key - The key of the entry.
-   * @param value - The value to push.
-   * @returns The updated array after the push operation.
+   * @param {string} key - The key of the entry.
+   * @param {V} value - The value to push.
+   * @returns {V[]} The updated array after the push operation.
    */
   public push(key: string, value: V): V[] {
     const data = this.get(key);
@@ -359,10 +465,27 @@ export default class Database<V = any> {
   }
 
   /**
+   * Pushes multiple values to an array at the specified key.
+   * @param {string} key - The key of the entry.
+   * @param {...V[]} values - The values to push.
+   * @returns {V[]} The updated array after the push operations.
+   */
+  public pushMany(key: string, ...values: V[]): V[] {
+    const data = this.get(key);
+
+    if (!Array.isArray(data)) return this.set(key, values as V) as V[];
+
+    data.push(...values);
+    this.set(key, data as V);
+
+    return data;
+  }
+
+  /**
    * Pulls a value from an array at the specified key.
-   * @param key - The key of the entry.
-   * @param value - The value to pull.
-   * @returns The updated array after the pull operation, or undefined if the key does not exist or is not an array.
+   * @param {string} key - The key of the entry.
+   * @param {V} value - The value to pull.
+   * @returns {V[] | undefined} The updated array after the pull operation, or undefined if the key does not exist or is not an array.
    */
   public pull(key: string, value: V): V[] | undefined {
     const data = this.get(key);
@@ -379,8 +502,9 @@ export default class Database<V = any> {
 
   /**
    * Creates a new database with only the specified keys.
-   * @param keys - The keys to pick.
-   * @returns A new database instance with the picked entries.
+   * @param {...string[]} keys - The keys to pick.
+   * @returns {Database<V>} A new database instance with the picked entries.
+   * @throws {Error} If keys is not an array.
    */
   public pick(...keys: string[]): Database<V> {
     Validator.instance(Array, keys);
@@ -397,10 +521,30 @@ export default class Database<V = any> {
   }
 
   /**
+   * Creates a random key that doesn't exist in the database.
+   * @param {number} [length=10] - Length of the key to generate.
+   * @returns {string} A unique random key.
+   */
+  public randomKey(length: number = 10): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let key: string;
+    do {
+      key = Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    } while (this.has(key));
+    return key;
+  }
+
+  /**
    * Reduces the entries in the database to a single value based on the provided callback and initial value.
-   * @param callback - The function to execute on each entry.
-   * @param initialValue - The initial value to start the reduction.
-   * @returns The reduced value.
+   * @param {Function} callback - The function to execute on each entry.
+   * @param {R} callback.accumulator - The accumulator value.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @param {R} initialValue - The initial value to start the reduction.
+   * @returns {R} The reduced value.
+   * @template R The type of the reduced value.
    */
   public reduce<R>(callback: (accumulator: R, value: V, index: number, key: string, Database: this) => R, initialValue: R): R {
     Validator.function(callback);
@@ -413,18 +557,29 @@ export default class Database<V = any> {
 
   /**
    * Sets a key-value pair in the database.
-   * @param key - The key to set.
-   * @param value - The value to associate with the key.
-   * @returns The value that was set.
+   * @param {string} key - The key to set.
+   * @param {V} value - The value to associate with the key.
+   * @returns {V} The value that was set.
    */
   public set(key: string, value: V): V {
     return this.options.driver.set(key, value);
   }
 
   /**
+   * Sets multiple key-value pairs in the database.
+   * @param {Record<string, V>} entries - Object containing key-value pairs to set.
+   * @returns {this} The database instance.
+   */
+  public setMany(entries: Record<string, V>): this {
+    for (const [key, value] of Object.entries(entries)) this.set(key, value);
+
+    return this;
+  }
+
+  /**
    * Determines the size of the value associated with the specified key if it is an array or string.
-   * @param key - The key of the entry to check.
-   * @returns The size of the value if it is an array or string, or -1 if the key does not exist or the value is not an array or string.
+   * @param {string} key - The key of the entry to check.
+   * @returns {number} The size of the value if it is an array or string, or -1 if the key does not exist or the value is not an array or string.
    */
   public sizeOf(key: string): number {
     const _type = this.typeOf(Validator.string(key));
@@ -435,9 +590,10 @@ export default class Database<V = any> {
 
   /**
    * Creates a new database with a subset of entries based on the start and end indices.
-   * @param start - The starting index.
-   * @param end - The ending index. Defaults to the size of the database.
-   * @returns A new database instance with the sliced entries.
+   * @param {number} [start=0] - The starting index.
+   * @param {number} [end=this.size] - The ending index.
+   * @returns {Database<V>} A new database instance with the sliced entries.
+   * @throws {Error} If start or end indices are invalid.
    */
   public slice(start: number = 0, end: number = this.size): Database<V> {
     Validator.NumberValidation.greaterThanOrEqual(0).parse(start);
@@ -452,8 +608,12 @@ export default class Database<V = any> {
 
   /**
    * Checks if some entries in the database satisfy the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns True if at least one entry satisfies the callback, false otherwise.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {number} callback.index - The index of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {boolean} True if at least one entry satisfies the callback, false otherwise.
    */
   public some(callback: (value: V, index: number, key: string, Database: this) => boolean): boolean {
     Validator.function(callback);
@@ -468,9 +628,30 @@ export default class Database<V = any> {
   }
 
   /**
+   * Sorts the database entries based on the provided callback.
+   * @param {Function} callback - The comparison function.
+   * @param {V} callback.a - First value to compare.
+   * @param {V} callback.b - Second value to compare.
+   * @returns {Database<V>} A new sorted database instance.
+   */
+  public sort(callback: (a: V, b: V) => number): Database<V> {
+    const sorted = Array.from(this.all())
+      .sort((a, b) => callback(a.value, b.value));
+
+    const db = this.clone(false);
+    for (const { key, value } of sorted) {
+      db.set(key, value);
+    }
+    return db;
+  }
+
+  /**
    * Sweeps entries from the database based on the provided callback.
-   * @param callback - The function to test for each entry.
-   * @returns The number of entries removed.
+   * @param {Function} callback - The function to test for each entry.
+   * @param {V} callback.value - The value of the current entry.
+   * @param {string} callback.key - The key of the current entry.
+   * @param {Database<V>} callback.Database - The database instance.
+   * @returns {number} The number of entries removed.
    */
   public sweep(callback: (value: V, key: string, Database: this) => boolean): number {
     Validator.function(callback);
@@ -488,7 +669,7 @@ export default class Database<V = any> {
 
   /**
    * Retrieves all keys and values as separate arrays.
-   * @returns An object containing the keys and values arrays.
+   * @returns {{keys: string[], values: V[]}} An object containing the keys and values arrays.
    */
   public toArray(): { keys: string[], values: V[] } {
     const keys: string[] = [];
@@ -506,7 +687,7 @@ export default class Database<V = any> {
 
   /**
    * Converts the cache to two Sets, one for keys and one for values.
-   * @returns A tuple containing two Sets: one for keys and one for values.
+   * @returns {[Set<string>, Set<V>]} A tuple containing two Sets: one for keys and one for values.
    */
   public toSet(): [Set<string>, Set<V>] {
     const array = this.toArray();
@@ -516,7 +697,7 @@ export default class Database<V = any> {
 
   /**
    * Retrieves all entries in the database as a JSON object.
-   * @returns A JSON object containing all entries.
+   * @returns {Record<string, V>} A JSON object containing all entries.
    */
   public toJSON(): Record<string, V> {
     return this.options.driver.toJSON();
@@ -524,8 +705,8 @@ export default class Database<V = any> {
 
   /**
    * Determines the type of the value associated with the specified key.
-   * @param key - The key of the entry to check.
-   * @returns The type of the value ('array' if the value is an array, or the result of the typeof operator).
+   * @param {string} key - The key of the entry to check.
+   * @returns {string | undefined} The type of the value ('array' if the value is an array, or the result of the typeof operator).
    *          Returns undefined if the key does not exist.
    */
   public typeOf(key: string): string | undefined {
@@ -540,11 +721,23 @@ export default class Database<V = any> {
   }
 
   /**
+   * Updates an existing entry with new data.
+   * @param {string} key - The key of the entry to update.
+   * @param {Function} updater - Function that receives the old value and returns the new value.
+   * @param {V} updater.oldValue - The current value associated with the key.
+   * @returns {V | undefined} The updated value, or undefined if key doesn't exist.
+   */
+  public update(key: string, updater: (oldValue: V) => V): V | undefined {
+    if (!this.has(key)) return undefined;
+    const newValue = updater(this.get(key)!);
+    return this.set(key, newValue);
+  }
+
+  /**
    * Retrieves the value associated with the specified key.
-   *
    * Alternative to get() function. Only difference is this function uses find() function.
-   * @param key - The key of the entry to retrieve.
-   * @returns The value associated with the specified key, or undefined if the key is not found.
+   * @param {string} key - The key of the entry to retrieve.
+   * @returns {V | undefined} The value associated with the specified key, or undefined if the key is not found.
    */
   public valueOf(key: string): V | undefined {
     return this.find((v, i, k) => k === Validator.string(key))?.value ?? undefined;
@@ -552,8 +745,9 @@ export default class Database<V = any> {
 
   /**
    * Validates and checks the options for the database.
-   * @param options - The options to validate and check.
-   * @returns The validated and checked options.
+   * @param {DatabaseOptions<T>} [options] - The options to validate and check.
+   * @returns {_DatabaseOptions<T>} The validated and checked options.
+   * @template T The type of values stored in the database.
    */
   static checkOptions<T>(options?: DatabaseOptions<T>): _DatabaseOptions<T> {
     options ??= {};
@@ -566,7 +760,7 @@ export default class Database<V = any> {
     options.driver ??= new MemoryDriver(options);
 
     Validator.number(options.spaces);
-    Validator.instance(options?.driver, MemoryDriver);
+    if (!(options.driver instanceof MemoryDriver)) throw new Error('Driver must be an instance of MemoryDriver');
 
     return options as _DatabaseOptions;
   }
