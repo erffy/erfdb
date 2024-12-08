@@ -4,8 +4,24 @@
   "version": "1.0.2",
   "author": "erffy",
   "repository": {
-    "url": "git://github.com/erffy/erfdb.git"
+    "type": "git",
+    "url": "git+https://github.com/erffy/erfdb.git"
   },
+  "bugs": {
+    "url": "https://github.com/erffy/erfdb/issues"
+  },
+  "homepage": "https://github.com/erffy/erfdb#readme",
+  "keywords": [
+    "database",
+    "db",
+    "json",
+    "yaml",
+    "bson",
+    "memory",
+    "cache",
+    "storage",
+    "key-value"
+  ],
   "scripts": {
     "postinstall": "tsc",
     "clear": "rm -rf src"
