@@ -1,6 +1,7 @@
 tests
 pnpm-lock.yaml
 src
+.tap
 
 # Based on https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore
 

@@ -16,57 +16,70 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Git
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Fetch all tags
-        run: git fetch --tags
+      - name: Get current version
+        id: version
+        run: echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
 
-      - name: Get current version from package.json
+      - name: Check existing release
+        id: check_release
         run: |
-          echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Get previous release tag
-        id: get_previous_tag
-        run: |
-          latest_tag=$(gh release list --limit 1 --json tagName | jq -r '.[0].tagName')
-          echo "PREV_RELEASE=$latest_tag" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Check if version has been released
-        id: check_if_released
-        run: |
-          gh release view ${{ env.VERSION }} && echo "RELEASED=true" >> $GITHUB_ENV || echo "RELEASED=false" >> $GITHUB_ENV
+          if gh release view ${{ env.VERSION }} &>/dev/null; then
+            echo "EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "EXISTS=false" >> $GITHUB_ENV
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Generate ChangeLog
-        if: success() && env.RELEASED == 'false'
+      - name: Generate changelog
+        if: env.EXISTS == 'false'
+        id: changelog
         run: |
-          changelog=$(git log ${{ env.PREV_RELEASE }}..HEAD --oneline)
-          echo "CHANGELOG=$changelog" >> $GITHUB_ENV
+          # Get the latest tag
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$latest_tag" ]; then
+            # If no tags exist, get all commits
+            echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+            git log --pretty=format:"- %s (%h)" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          else
+            # Get commits since last tag
+            echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+            git log ${latest_tag}..HEAD --pretty=format:"- %s (%h)" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
 
-      - name: Create Git Tag and Push
-        if: success() && env.RELEASED == 'false'
+      - name: Create Git Tag
+        if: env.EXISTS == 'false'
         run: |
-          git tag -a "${{ env.VERSION }}" -m "Version ${{ env.VERSION }}"
-          git push origin "${{ env.VERSION }}"
-          echo "TAG_CREATED=true" >> $GITHUB_ENV
+          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
 
-      - name: Create Release
-        if: success() && env.TAG_CREATED == 'true'
-        uses: softprops/action-gh-release@master
+      - name: Create GitHub Release
+        if: env.EXISTS == 'false'
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
-          prerelease: ${{ contains(env.VERSION, 'rc') }}
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
           body: |
-            ### ChangeLog
+            ## Changes
             ${{ env.CHANGELOG }}
+            
+            ## Installation
+            ```bash
+            npm install erfdb@${{ env.VERSION }}
+            ```
+          prerelease: ${{ contains(env.VERSION, 'alpha') || contains(env.VERSION, 'beta') || contains(env.VERSION, 'rc') }}
+          draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
