@@ -66,6 +66,8 @@ export default class MemoryDriver<V = any> {
 
     this.cache.set(Validator.string(key), value);
 
+    if (this.constructor.name != 'MemoryDriver') this.write();
+
     return value;
   }
 
