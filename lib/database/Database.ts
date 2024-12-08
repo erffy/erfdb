@@ -398,16 +398,12 @@ export default class Database<V = any> {
    * @param {Database<V>} callback.Database - The database instance.
    * @returns {Database<V>} A new database instance with the mapped entries.
    */
-  public map(callback: (value: V, index: number, key: string, Database: this) => boolean): Database<V> {
-    Validator.function(callback);
-
-    const db: Database<V> = this.clone();
-
-    this.each((...args) => {
-      if (callback(...args)) db.set(args[2], args[0]);
+  public map(callback: (value: V) => V): Database<V> {
+    const newDb = this.clone(false);
+    this.each((value, index, key) => {
+      newDb.set(key, callback(value));
     });
-
-    return db;
+    return newDb;
   }
 
   /**
@@ -553,12 +549,12 @@ export default class Database<V = any> {
 
   /**
    * Sets multiple key-value pairs in the database.
-   * @param {Record<string, V>} entries - Object containing key-value pairs to set.
-   * @returns {this} The database instance.
+   * @param {Array<[string, V]>} entries Array of key-value pairs to set
+   * @returns {this} The database instance
    */
-  public setMany(entries: Record<string, V>): this {
-    for (const [key, value] of Object.entries(entries)) this.set(key, value);
-
+  public setMany(entries: Array<[string, V]>): this {
+    Validator.array(entries);
+    this.options.driver.setMany(entries);
     return this;
   }
 

@@ -11,7 +11,6 @@ import { existsSync, unlinkSync } from 'graceful-fs';
 export default class MemoryDriver<V = any> {
   protected readonly _cache: Map<string, V> = new Map();
   protected readonly options: _MemoryDriverOptions;
-  private _size: number = 0; // Cache size for O(1) access
 
   /**
    * Creates an instance of MemoryDriver.
@@ -51,7 +50,7 @@ export default class MemoryDriver<V = any> {
    * @returns {number} The size of the cache.
    */
   public get size(): number {
-    return this._size;
+    return this.cache.size;
   }
 
   /**
@@ -61,12 +60,9 @@ export default class MemoryDriver<V = any> {
    * @returns {V} The set value.
    */
   public set(key: string, value: V): V {
-    if (this.options.size != 0 && (this._size >= this.options.size)) throw new RangeError(`Database limit exceeded. (${this._size}/${this.options.size})`);
+    if (this.options.size != 0 && (this.cache.size >= this.options.size)) throw new RangeError(`Database limit exceeded. (${this.cache.size}/${this.options.size})`);
 
-    const validKey = Validator.string(key);
-    if (!this.cache.has(validKey)) this._size++;
-
-    this.cache.set(validKey, value);
+    this.cache.set(Validator.string(key), value);
 
     return value;
   }
@@ -115,28 +111,7 @@ export default class MemoryDriver<V = any> {
    * @returns {boolean} True if the key was deleted, false otherwise.
    */
   public del(key: string): boolean {
-    const validKey = Validator.string(key);
-    if (this.cache.delete(validKey)) {
-      this._size--;
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Deletes multiple keys at once.
-   * @param {string[]} keys Array of keys to delete
-   * @returns {number} Number of keys deleted
-   */
-  public delMany(keys: string[]): number {
-    let deleted = 0;
-
-    for (const key of keys) {
-      if (this.del(key)) deleted++;
-    }
-
-    return deleted;
+    return this.cache.delete(Validator.string(key)) ?? false;
   }
 
   /**
@@ -161,7 +136,6 @@ export default class MemoryDriver<V = any> {
    */
   public clear(): void {
     this.cache.clear();
-    this._size = 0;
   }
 
   /**
@@ -181,7 +155,7 @@ export default class MemoryDriver<V = any> {
    * @returns {{ key: string, value: V }[]} The array representation of the cache.
    */
   public toArray(): { key: string, value: V }[] {
-    const arr: { key: string, value: V }[] = new Array(this._size);
+    const arr: { key: string, value: V }[] = new Array(this.cache.size);
     let i = 0;
 
     for (const [key, value] of this.cache) arr[i++] = { key, value };
@@ -235,18 +209,52 @@ export default class MemoryDriver<V = any> {
   static checkOptions(o?: MemoryDriverOptions): _MemoryDriverOptions {
     o ??= {};
 
-    Validator.object(o);
+    // Basic object validation
+    if (typeof o !== 'object' || o === null) {
+      throw new Error('Options must be an object');
+    }
 
-    o.type ??= 'memory';
-    o.path ??= new URL(`file:///${process.cwd()}/erfdb.${o.type}`);
-    o.size ??= 0;
-    o.debugger ??= false;
+    // Set defaults
+    const options = {
+      type: o.type ?? 'memory',
+      path: o.path ?? `erfdb.${o.type ?? 'memory'}`,
+      size: o.size ?? 0,
+      debugger: o.debugger ?? false
+    };
 
-    return Validator.object({
-      type: Validator.stringInput('json', 'bson', 'yaml', 'memory', 'custom', 'auto'),
-      path: Validator.URLValidation,
-      size: Validator.NumberValidation,
-      debugger: Validator.BooleanValidation
-    }).parse(o);
+    // Validate individual fields after defaults are set
+    if (typeof options.type === 'string') {
+      const validTypes = ['json', 'bson', 'yaml', 'memory', 'custom', 'auto'];
+      if (!validTypes.includes(options.type)) {
+        throw new Error(`Invalid type: ${options.type}. Must be one of: ${validTypes.join(', ')}`);
+      }
+    }
+
+    // Handle path conversion
+    if (!(options.path instanceof URL)) {
+      try {
+        // Convert relative or absolute file path to file URL
+        const path = options.path.toString();
+        if (path.startsWith('file://')) {
+          options.path = new URL(path);
+        } else {
+          // Handle relative paths by joining with current working directory
+          const fullPath = require('path').resolve(process.cwd(), path);
+          options.path = new URL(`file://${fullPath}`);
+        }
+      } catch (error: any) {
+        throw new Error(`Invalid path: ${error.message}`);
+      }
+    }
+
+    if (typeof options.size !== 'number' || options.size < 0) {
+      throw new Error('Size must be a non-negative number');
+    }
+
+    if (typeof options.debugger !== 'boolean') {
+      throw new Error('Debugger must be a boolean');
+    }
+
+    return options as _MemoryDriverOptions;
   }
 }
