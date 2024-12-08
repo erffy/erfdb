@@ -541,7 +541,7 @@ export default class Database<V = any> {
 
   /**
    * Retrieves the value associated with the specified key.
-   * 
+   *
    * Alternative to get() function. Only difference is this function uses find() function.
    * @param key - The key of the entry to retrieve.
    * @returns The value associated with the specified key, or undefined if the key is not found.

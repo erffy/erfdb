@@ -99,7 +99,7 @@ export default class MemoryDriver<V = any> {
   /**
    * Deletes the database file associated with the driver if it exists.
    * This method only applies to subclasses of MemoryDriver and not to the MemoryDriver itself.
-   * 
+   *
    * @returns {boolean} True if the database file was successfully deleted, false otherwise.
    */
   public destroy(): boolean {
@@ -168,10 +168,10 @@ export default class MemoryDriver<V = any> {
 
   /**
    * Creates a new MemoryDriver instance containing only the entries that satisfy the provided callback function.
-   * 
-   * @param {(value: V, key: string, driver: this) => boolean} callback - The function to test each entry. 
+   *
+   * @param {(value: V, key: string, driver: this) => boolean} callback - The function to test each entry.
    * It is called with three arguments: the value of the entry, the key of the entry, and the MemoryDriver instance itself.
-   * 
+   *
    * @returns {MemoryDriver<V>} A new MemoryDriver instance with entries that pass the test implemented by the callback.
    */
   public map(callback: (value: V, key: string, Driver: this) => boolean): MemoryDriver<V> {

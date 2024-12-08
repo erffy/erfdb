@@ -121,7 +121,7 @@ export default class Validator {
   static enum<T extends Record<string, string | number>>(enumObj: T, value: any): T[keyof T] {
     const literals = Object.values(enumObj).map((v) => s.literal(v));
     if (!literals.length) throw new Error('The enum object must have at least one value.');
-    
+
     return this.validate(s.union(literals), value);
   }
 
