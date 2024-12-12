@@ -159,7 +159,7 @@ export default class Database<V = any> {
    * @param {Database<V>} callback.Database - The database instance.
    * @returns {this} The database instance.
    */
-  public each(callback: (value: V, index: number, key: string, Database: this) => void): this {
+  public each(callback: (value: V, index: number, key: string, Database: this) => void): void {
     Validator.function(callback);
 
     let index: number = 0;
@@ -167,8 +167,6 @@ export default class Database<V = any> {
       callback(value, index, key, this);
       index++;
     }
-
-    return this;
   }
 
   /**
@@ -256,9 +254,8 @@ export default class Database<V = any> {
 
     let index: number = 0;
     for (const { key, value } of this.all()) {
-      if (callback(value, index, key, this)) {
-        results.push({ key, value, index });
-      }
+      if (callback(value, index, key, this)) results.push({ key, value, index });
+
       index++;
     }
 
@@ -408,9 +405,7 @@ export default class Database<V = any> {
    */
   public map(callback: (value: V) => V): Database<V> {
     const newDb = this.clone(false);
-    this.each((value, index, key) => {
-      newDb.set(key, callback(value));
-    });
+    this.each((value, index, key) => newDb.set(key, callback(value)));
     return newDb;
   }
 
@@ -613,13 +608,10 @@ export default class Database<V = any> {
    * @returns {Database<V>} A new sorted database instance.
    */
   public sort(callback: (a: V, b: V) => number): Database<V> {
-    const sorted = Array.from(this.all())
-      .sort((a, b) => callback(a.value, b.value));
+    const sorted = Array.from(this.all()).sort((a, b) => callback(a.value, b.value));
 
     const db = this.clone(false);
-    for (const { key, value } of sorted) {
-      db.set(key, value);
-    }
+    for (const { key, value } of sorted) db.set(key, value);
     return db;
   }
 
