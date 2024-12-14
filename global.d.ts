@@ -33,6 +33,12 @@ declare module 'erfdb' {
     public get isEmpty(): boolean;
 
     /**
+     * Clears all entries in the database.
+     * @returns {void} This method does not return a value.
+     */
+    public clear(): void;
+
+    /**
      * Retrieves all entries in the database.
      * @param {number} amount - The maximum number of entries to retrieve. Defaults to 0 (retrieve all).
      * @returns {Set<{key: string, value: V}>} A Set of key-value pairs.
@@ -89,9 +95,9 @@ declare module 'erfdb' {
      * @param {number} callback.index - The index of the current entry.
      * @param {string} callback.key - The key of the current entry.
      * @param {Database<V>} callback.Database - The database instance.
-     * @returns {this} The database instance.
+     * @returns {void}
      */
-    public each(callback: (value: V, index: number, key: string, Database: this) => void): this;
+    public each(callback: (value: V, index: number, key: string, Database: this) => void): void;
 
     /**
      * Checks if every entry in the database satisfies the provided callback.
@@ -285,13 +291,6 @@ declare module 'erfdb' {
      * @throws {Error} If keys is not an array.
      */
     public pick(...keys: string[]): Database<V>;
-
-    /**
-     * Creates a random key that doesn't exist in the database.
-     * @param {number} [length=10] - Length of the key to generate.
-     * @returns {string} A unique random key.
-     */
-    public randomKey(length?: number): string;
 
     /**
      * Reduces the entries in the database to a single value based on the provided callback and initial value.

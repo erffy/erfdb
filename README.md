@@ -62,7 +62,6 @@ db.get('users.john'); // Get value by key
 db.getMany(['users.john', 'users.jane']); // Get multiple values
 db.has('key-1'); // Check if key exists
 db.typeOf('users.age'); // Get type of value
-db.sizeOf('users'); // Get size of value
 db.size; // Get total number of entries
 
 // Find entries

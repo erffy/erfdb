@@ -1,7 +1,7 @@
 {
   "name": "erfdb",
   "description": "A Fast and Efficient Map-Based Database Module",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "erffy",
   "repository": {
     "type": "git",
