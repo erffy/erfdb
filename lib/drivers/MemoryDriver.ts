@@ -11,7 +11,7 @@ import { resolve } from 'node:path';
  */
 export default class MemoryDriver<V = any> {
   protected readonly _cache: Map<string, V> = new Map();
-  protected readonly options!: _MemoryDriverOptions;
+  protected readonly options: _MemoryDriverOptions;
 
   /**
    * Creates an instance of MemoryDriver.
@@ -19,7 +19,7 @@ export default class MemoryDriver<V = any> {
    */
   public constructor(options: MemoryDriverOptions = {}) {
     // @ts-ignore
-    this.constructor.checkOptions(this.options, options, { type: 'memory' });
+    this.options = this.constructor.checkOptions(options, { type: 'memory' });
 
     if (this.constructor.name != 'MemoryDriver' && existsSync(this.options.path)) {
       try {
@@ -228,27 +228,26 @@ export default class MemoryDriver<V = any> {
 
   /**
    * Validates and sets default values for the provided options.
-   * 
+   *
    * This method checks the provided options against the default values and ensures that
    * they are valid. It will throw errors if the options are not in the expected format
    * or if they contain invalid values.
-   * 
-   * @param target - The target object where validated options will be assigned.
+   *
    * @param base - The base options to validate against.
    * @param override - Optional parameters to override the base options.
    * 
    * @throws {Error} Throws an error if the base options are not an object or if any
    * of the provided options are invalid.
    * 
-   * @returns {void} This method does not return a value.
+   * @returns {object} The validated options object.
    */
-  static checkOptions(target: object, base: MemoryDriverOptions, override?: MemoryDriverOptions): void {
+  static checkOptions(base: MemoryDriverOptions, override?: MemoryDriverOptions): object {
     const _options = Object.create({});
 
     if (typeof base !== 'object' || base === null) throw new Error('Options must be an object');
 
     Object.defineProperty(_options, 'type', { value: override?.type ?? (base?.type ?? 'memory') });
-    Object.defineProperty(_options, 'path', { value: override?.path ?? (base?.path ?? `erfdb.${_options.type}`) });
+    Object.defineProperty(_options, 'path', { value: override?.path ?? (base?.path ?? `erfdb.${_options.type}`), writable: true });
     Object.defineProperty(_options, 'size', { value: override?.size ?? (base?.size ?? 0) });
     Object.defineProperty(_options, 'spaces', { value: (override as JsonDriverOptions)?.spaces ?? ((base as JsonDriverOptions)?.spaces ?? 2) });
 
@@ -262,7 +261,7 @@ export default class MemoryDriver<V = any> {
       try {
         const path = _options.path.toString();
 
-        Object.defineProperty(_options, 'path', { value: path.startsWith('file://') ? new URL(path) : new URL(`file://${resolve(process.cwd(), path)}`) });
+        Object.defineProperty(_options, 'path', { value: path.startsWith('file://') ? new URL(path) : new URL(`file://${resolve(process.cwd(), path)}`), writable: false });
       } catch (error: any) {
         throw new Error(`Invalid path: ${error.message}`);
       }
@@ -271,6 +270,6 @@ export default class MemoryDriver<V = any> {
     if (typeof _options.size !== 'number' || _options.size < 0) throw new Error('Size must be a non-negative number');
     if (typeof _options.spaces !== 'number' || _options.spaces < 0) throw new Error('Spaces must be a non-negative number');
 
-    Object.assign(target, _options);
+    return _options;
   }
 }

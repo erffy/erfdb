@@ -12,7 +12,7 @@ export default class Database<V = any> {
    * Creates an instance of Database.
    * @param options - The options to configure the database.
    */
-  public constructor(options?: DatabaseOptions<V>) {
+  public constructor(options: DatabaseOptions<V> = {}) {
     // @ts-ignore
     this.options = this.constructor.checkOptions(options);
   }
@@ -127,19 +127,6 @@ export default class Database<V = any> {
    */
   public del(key: string): boolean {
     return this.options.driver.del(key);
-  }
-
-  /**
-   * Deletes multiple entries by keys.
-   * @param {...string[]} keys - The keys of entries to delete.
-   * @returns {number} Number of entries deleted.
-   */
-  public deleteMany(...keys: string[]): number {
-    let deleted = 0;
-    for (const key of keys) {
-      if (this.del(key)) deleted++;
-    }
-    return deleted;
   }
 
   /**
@@ -263,15 +250,6 @@ export default class Database<V = any> {
   }
 
   /**
-   * Gets multiple values by their keys.
-   * @param {...string[]} keys - The keys to retrieve values for.
-   * @returns {Array<V | undefined>} Array of values in same order as keys.
-   */
-  public getMany(...keys: string[]): (V | undefined)[] {
-    return keys.map(key => this.get(key));
-  }
-
-  /**
    * Gets the value associated with the given key.
    * @param {string} key - The key of the entry to retrieve.
    * @returns {V | undefined} The value associated with the key, or undefined if not found.
@@ -287,24 +265,6 @@ export default class Database<V = any> {
    */
   public has(key: string): boolean {
     return this.options.driver.has(key);
-  }
-
-  /**
-   * Checks if multiple keys exist in the database.
-   * @param {...string[]} keys - The keys to check.
-   * @returns {boolean} True if all keys exist, false otherwise.
-   */
-  public hasAll(...keys: string[]): boolean {
-    return keys.every(key => this.has(key));
-  }
-
-  /**
-   * Checks if any of the given keys exist in the database.
-   * @param {...string[]} keys - The keys to check.
-   * @returns {boolean} True if at least one key exists, false otherwise.
-   */
-  public hasAny(...keys: string[]): boolean {
-    return keys.some(key => this.has(key));
   }
 
   /**
@@ -340,15 +300,6 @@ export default class Database<V = any> {
    */
   public keyOf(value: V): string | undefined {
     return this.find((v) => v === value)?.key ?? undefined;
-  }
-
-  /**
-   * Retrieves all keys associated with the given value.
-   * @param {V} value - The value to find keys for.
-   * @returns {string[]} Array of keys associated with the value.
-   */
-  public keysOf(value: V): string[] {
-    return this.findAll((v) => v === value).map(entry => entry.key);
   }
 
   /**
@@ -463,22 +414,6 @@ export default class Database<V = any> {
     return data;
   }
 
-  /**
-   * Pushes multiple values to an array at the specified key.
-   * @param {string} key - The key of the entry.
-   * @param {...V[]} values - The values to push.
-   * @returns {V[]} The updated array after the push operations.
-   */
-  public pushMany(key: string, ...values: V[]): V[] {
-    const data = this.get(key);
-
-    if (!Array.isArray(data)) return this.set(key, values as V) as V[];
-
-    data.push(...values);
-    this.set(key, data as V);
-
-    return data;
-  }
 
   /**
    * Pulls a value from an array at the specified key.
@@ -548,17 +483,6 @@ export default class Database<V = any> {
    */
   public set(key: string, value: V): V {
     return this.options.driver.set(key, value);
-  }
-
-  /**
-   * Sets multiple key-value pairs in the database.
-   * @param {Array<[string, V]>} entries Array of key-value pairs to set
-   * @returns {this} The database instance
-   */
-  public setMany(entries: Array<[string, V]>): this {
-    Validator.array(entries);
-    this.options.driver.setMany(entries);
-    return this;
   }
 
   /**
@@ -691,19 +615,6 @@ export default class Database<V = any> {
   }
 
   /**
-   * Updates an existing entry with new data.
-   * @param {string} key - The key of the entry to update.
-   * @param {Function} updater - Function that receives the old value and returns the new value.
-   * @param {V} updater.oldValue - The current value associated with the key.
-   * @returns {V | undefined} The updated value, or undefined if key doesn't exist.
-   */
-  public update(key: string, updater: (oldValue: V) => V): V | undefined {
-    if (!this.has(key)) return undefined;
-    const newValue = updater(this.get(key)!);
-    return this.set(key, newValue);
-  }
-
-  /**
    * Retrieves the value associated with the specified key.
    * Alternative to get() function. Only difference is this function uses find() function.
    * @param {string} key - The key of the entry to retrieve.
@@ -714,24 +625,31 @@ export default class Database<V = any> {
   }
 
   /**
-   * Validates and checks the options for the database.
-   * @param {DatabaseOptions<T>} [options] - The options to validate and check.
-   * @returns {_DatabaseOptions<T>} The validated and checked options.
-   * @template T The type of values stored in the database.
+   * Validates and sets default values for the provided options.
+   *
+   * This method checks the provided options against the default values and ensures that
+   * they are valid. It will throw errors if the options are not in the expected format
+   * or if they contain invalid values.
+   *
+   * @param base - The base options to validate against.
+   * 
+   * @throws {Error} Throws an error if the base options are not an object or if any
+   * of the provided options are invalid.
+   *
+   * @returns {object} The validated options object.
+   * 
+   * @remarks This method utilizes the `MemoryDriver.checkOptions` method to validate
+   * the options and ensures that the driver is an instance of `MemoryDriver`.
    */
-  static checkOptions<T>(options?: DatabaseOptions<T>): _DatabaseOptions<T> {
-    options ??= {};
+  static checkOptions(base: object): object {
+    const _options = Object.create({});
 
-    Validator.object(options);
+    MemoryDriver.checkOptions(_options, base);
+    // @ts-ignore
+    Object.defineProperty(_options, 'driver', { value: base?.driver ?? new MemoryDriver() });
 
-    MemoryDriver.checkOptions(options);
+    if (!(_options.driver instanceof MemoryDriver)) throw new Error('Driver must be an instance of MemoryDriver');
 
-    options.spaces ??= 2;
-    options.driver ??= new MemoryDriver(options);
-
-    Validator.number(options.spaces);
-    if (!(options.driver instanceof MemoryDriver)) throw new Error('Driver must be an instance of MemoryDriver');
-
-    return options as _DatabaseOptions;
+    return _options;
   }
 }
