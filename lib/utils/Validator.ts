@@ -81,9 +81,8 @@ export default class Validator {
    * colorValidator.parse('yellow') // Throws ValidationError
    */
   static stringInput(...values: string[]): ReturnType<typeof s.union> {
-    if (values.length === 0) {
-      throw new Error('At least one value must be provided for stringInput.');
-    }
+    if (values.length === 0) throw new Error('At least one value must be provided for stringInput.');
+
     return s.union(values.map((value) => s.literal(value)));
   }
 
@@ -114,11 +113,8 @@ export default class Validator {
   static boolean(value: any, options?: { exact?: boolean }): boolean {
     let validation: BaseValidator<boolean>;
 
-    if (options?.exact !== undefined) {
-      validation = s.literal(options.exact);
-    } else {
-      validation = this.BooleanValidation;
-    }
+    if (options?.exact !== undefined) validation = s.literal(options.exact);
+    else validation = this.BooleanValidation;
 
     return this.validate(validation, value);
   }

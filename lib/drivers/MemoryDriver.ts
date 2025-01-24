@@ -2,6 +2,7 @@ import { set } from '../utils/Lodash';
 import Validator from '../utils/Validator';
 
 import { existsSync, unlinkSync, writeFileSync } from 'graceful-fs';
+import { resolve } from 'node:path';
 
 /**
  * MemoryDriver is a class that manages an in-memory cache with support for various operations
@@ -10,7 +11,7 @@ import { existsSync, unlinkSync, writeFileSync } from 'graceful-fs';
  */
 export default class MemoryDriver<V = any> {
   protected readonly _cache: Map<string, V> = new Map();
-  protected readonly options: _MemoryDriverOptions;
+  protected readonly options!: _MemoryDriverOptions;
 
   /**
    * Creates an instance of MemoryDriver.
@@ -18,7 +19,7 @@ export default class MemoryDriver<V = any> {
    */
   public constructor(options: MemoryDriverOptions = {}) {
     // @ts-ignore
-    this.options = this.constructor.checkOptions({ ...options, type: 'memory' });
+    this.constructor.checkOptions(this.options, options, { type: 'memory' });
 
     if (this.constructor.name != 'MemoryDriver' && existsSync(this.options.path)) {
       try {
@@ -31,19 +32,39 @@ export default class MemoryDriver<V = any> {
     if (this.constructor.name != 'MemoryDriver' && !existsSync(this.options.path)) writeFileSync(this.options.path, '{}', { encoding: 'utf8' });
   }
 
+  /**
+   * Reads data from the storage and populates the cache.
+   * This method is intended to be implemented by subclasses.
+   * 
+   * @throws {Error} Throws an error if the method is not implemented.
+   */
   protected read(): void {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * Writes the current cache contents to the storage.
+   * This method is intended to be implemented by subclasses.
+   * 
+   * @throws {Error} Throws an error if the method is not implemented.
+   */
   protected write(): void {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * Gets the cache as a Map.
+   * @returns {Map<string, V>} The cache containing key-value pairs.
+   */
   public get cache(): typeof this._cache {
     return this._cache;
   }
 
-  *[Symbol.iterator]() {
+  /**
+   * Returns an iterator for the cache entries.
+   * @returns {IterableIterator<[string, V]>} An iterator that yields key-value pairs from the cache.
+   */
+  *[Symbol.iterator](): IterableIterator<[string, V]> {
     yield* this.cache;
   }
 
@@ -207,58 +228,49 @@ export default class MemoryDriver<V = any> {
 
   /**
    * Validates and sets default values for the provided options.
-   * @param {MemoryDriverOptions} [o={}] The options to validate.
-   * @returns {MemoryDriverOptions} The validated and defaulted options.
+   * 
+   * This method checks the provided options against the default values and ensures that
+   * they are valid. It will throw errors if the options are not in the expected format
+   * or if they contain invalid values.
+   * 
+   * @param target - The target object where validated options will be assigned.
+   * @param base - The base options to validate against.
+   * @param override - Optional parameters to override the base options.
+   * 
+   * @throws {Error} Throws an error if the base options are not an object or if any
+   * of the provided options are invalid.
+   * 
+   * @returns {void} This method does not return a value.
    */
-  static checkOptions(o?: MemoryDriverOptions): _MemoryDriverOptions {
-    o ??= {};
+  static checkOptions(target: object, base: MemoryDriverOptions, override?: MemoryDriverOptions): void {
+    const _options = Object.create({});
 
-    // Basic object validation
-    if (typeof o !== 'object' || o === null) {
-      throw new Error('Options must be an object');
-    }
+    if (typeof base !== 'object' || base === null) throw new Error('Options must be an object');
 
-    // Set defaults
-    const options = {
-      type: o.type ?? 'memory',
-      path: o.path ?? `erfdb.${o.type ?? 'memory'}`,
-      size: o.size ?? 0,
-      debugger: o.debugger ?? false
-    };
+    Object.defineProperty(_options, 'type', { value: override?.type ?? (base?.type ?? 'memory') });
+    Object.defineProperty(_options, 'path', { value: override?.path ?? (base?.path ?? `erfdb.${_options.type}`) });
+    Object.defineProperty(_options, 'size', { value: override?.size ?? (base?.size ?? 0) });
+    Object.defineProperty(_options, 'spaces', { value: (override as JsonDriverOptions)?.spaces ?? ((base as JsonDriverOptions)?.spaces ?? 2) });
 
-    // Validate individual fields after defaults are set
-    if (typeof options.type === 'string') {
+    if (typeof _options.type === 'string') {
       const validTypes = ['json', 'bson', 'yaml', 'memory', 'custom', 'auto'];
-      if (!validTypes.includes(options.type)) {
-        throw new Error(`Invalid type: ${options.type}. Must be one of: ${validTypes.join(', ')}`);
-      }
+
+      if (!validTypes.includes(_options.type)) throw new Error(`Invalid type: ${_options.type}. Must be one of: ${validTypes.join(', ')}`);
     }
 
-    // Handle path conversion
-    if (!(options.path instanceof URL)) {
+    if (!(_options.path instanceof URL)) {
       try {
-        // Convert relative or absolute file path to file URL
-        const path = options.path.toString();
-        if (path.startsWith('file://')) {
-          options.path = new URL(path);
-        } else {
-          // Handle relative paths by joining with current working directory
-          const fullPath = require('path').resolve(process.cwd(), path);
-          options.path = new URL(`file://${fullPath}`);
-        }
+        const path = _options.path.toString();
+
+        Object.defineProperty(_options, 'path', { value: path.startsWith('file://') ? new URL(path) : new URL(`file://${resolve(process.cwd(), path)}`) });
       } catch (error: any) {
         throw new Error(`Invalid path: ${error.message}`);
       }
     }
 
-    if (typeof options.size !== 'number' || options.size < 0) {
-      throw new Error('Size must be a non-negative number');
-    }
+    if (typeof _options.size !== 'number' || _options.size < 0) throw new Error('Size must be a non-negative number');
+    if (typeof _options.spaces !== 'number' || _options.spaces < 0) throw new Error('Spaces must be a non-negative number');
 
-    if (typeof options.debugger !== 'boolean') {
-      throw new Error('Debugger must be a boolean');
-    }
-
-    return options as _MemoryDriverOptions;
+    Object.assign(target, _options);
   }
 }

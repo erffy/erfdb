@@ -1,4 +1,3 @@
-import Validator from '../utils/Validator';
 import MemoryDriver from './MemoryDriver';
 
 import { readFileSync, writeFileSync } from 'graceful-fs';
@@ -17,10 +16,6 @@ export default class JsonDriver<V = any> extends MemoryDriver<V> {
    * @param {JsonDriverOptions} [options={}] The options for the JSON driver.
    */
   public constructor(options: JsonDriverOptions = {}) {
-    options.spaces ??= 2;
-
-    Validator.number(options.spaces);
-
     super({ ...options, type: 'json' });
   }
 
@@ -39,8 +34,6 @@ export default class JsonDriver<V = any> extends MemoryDriver<V> {
    * @protected
    */
   protected write(): void {
-    const buffer = Buffer.from(JSON.stringify(this.toJSON(), null, this.options.spaces));
-
-    writeFileSync(this.options.path, buffer, { encoding: 'utf-8' });
+    writeFileSync(this.options.path, Buffer.from(JSON.stringify(this.toJSON(), null, this.options.spaces)), { encoding: 'utf-8' });
   }
 }

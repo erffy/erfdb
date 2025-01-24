@@ -1,6 +1,10 @@
 {
   "name": "erfdb",
+<<<<<<< Updated upstream
   "description": "A Fast and Efficient Map-Based Database Module",
+=======
+  "description": "Smartest and fastest Map-based database module",
+>>>>>>> Stashed changes
   "version": "1.1.1",
   "author": "erffy",
   "repository": {
@@ -41,7 +45,7 @@
   "peerDependencies": {
     "bson": "6.10",
     "typescript": "5.5",
-    "yaml": "2.6"
+    "yaml": "2.7"
   },
   "peerDependenciesMeta": {
     "yaml": {
@@ -54,9 +58,8 @@
   "devDependencies": {
     "@types/graceful-fs": "latest",
     "@types/node": "latest",
-    "@types/tap": "latest",
     "bson": "6.10",
     "tap": "21.0",
-    "yaml": "2.6"
+    "yaml": "2.7"
   }
 }
