@@ -109,6 +109,9 @@ db.pick('user.name', 'user.email'); // Get specific entries
 db.clear(); // Remove all entries
 ```
 
+### Contact
+- Join our [Flux Development](https://discord.gg/C8fXXjADQE) discord server.
+
 <br>
 
 [![Alt](https://repobeats.axiom.co/api/embed/7fd6fff744f52025aa6b5218d6c6e8f638c13aa4.svg)](https://github.com/erffy/erfdb)
