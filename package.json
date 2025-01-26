@@ -41,7 +41,7 @@
   "peerDependencies": {
     "bson": "6.10",
     "typescript": "5.5",
-    "yaml": "2.6"
+    "yaml": "2.7"
   },
   "peerDependenciesMeta": {
     "yaml": {
@@ -57,6 +57,6 @@
     "@types/tap": "latest",
     "bson": "6.10",
     "tap": "21.0",
-    "yaml": "2.6"
+    "yaml": "2.7"
   }
 }
