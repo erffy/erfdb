@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> This project is no longer maintained.<br>
+> Please refer to [quartz.db](https://github.com/erffy/quartz.db) `(based on quick.db 9.1.7)`
+
+<br>
+
 [![CodeQL](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/github-code-scanning/codeql)
 [![Release](https://github.com/erffy/erfdb/actions/workflows/release.yml/badge.svg)](https://github.com/erffy/erfdb/actions/workflows/release.yml)
 
